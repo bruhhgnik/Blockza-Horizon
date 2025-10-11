@@ -28,7 +28,7 @@ const App = () => {
       {/* 3D Canvas - Racing Game */}
       {gameStarted && (
         <Canvas
-          camera={{ position: [0, 30, 20], fov: 75 }}
+          camera={{ position: [0, 15, 20], fov: 75 }}
           style={{
             width: "100%",
             height: "100%",

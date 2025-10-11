@@ -16,11 +16,13 @@ export const CarController = () => {
   const velocityRef = useRef(new Vector3(0, 0, 0));
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const raycaster = useRef(new THREE.Raycaster());
+  const collisionRaycaster = useRef(new THREE.Raycaster());
 
   const speed = 0.5;
   const rotationSpeed = 0.03;
   const friction = 0.92;
   const carHeightOffset = 3; // Height above ground
+  const collisionDistance = 5; // Distance to check for collisions ahead
 
   // Keyboard event handlers
   useEffect(() => {
@@ -40,6 +42,31 @@ export const CarController = () => {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
+
+  // Check for collisions in a given direction
+  const checkCollision = (fromPos: Vector3, direction: Vector3): boolean => {
+    if (!carRef.current) return false;
+
+    collisionRaycaster.current.set(fromPos, direction.normalize());
+    collisionRaycaster.current.far = collisionDistance;
+
+    const intersects = collisionRaycaster.current.intersectObjects(scene.children, true);
+
+    // Check if any intersection is with track barriers (not the car or floor grid)
+    for (const intersect of intersects) {
+      // Skip the car itself and its children
+      if (carRef.current.getObjectById(intersect.object.id)) continue;
+
+      // Skip floor grid (check by name or type)
+      if (intersect.object.name === 'floorGrid' || intersect.object.type === 'GridHelper') continue;
+
+      // If we hit something close enough, it's a collision
+      if (intersect.distance < collisionDistance) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   useFrame(() => {
     if (!carRef.current) return;
@@ -68,13 +95,37 @@ export const CarController = () => {
     // Apply friction
     velocityRef.current.multiplyScalar(friction);
 
-    // Calculate new X and Z position
-    const newX = position.x + velocityRef.current.x;
-    const newZ = position.z + velocityRef.current.z;
+    // Check for collisions in multiple directions around the car
+    const carPosition = new Vector3(position.x, position.y, position.z);
+    const movementDirection = new Vector3(velocityRef.current.x, 0, velocityRef.current.z);
+
+    // If we're moving, check for collisions
+    let hasCollision = false;
+    if (movementDirection.length() > 0.01) {
+      // Check collision in movement direction and sides
+      const forwardDir = movementDirection.clone().normalize();
+      const leftDir = new Vector3(-forwardDir.z, 0, forwardDir.x);
+      const rightDir = new Vector3(forwardDir.z, 0, -forwardDir.x);
+
+      // Check multiple rays: forward, forward-left, forward-right
+      hasCollision =
+        checkCollision(carPosition, forwardDir) ||
+        checkCollision(carPosition, forwardDir.clone().add(leftDir.multiplyScalar(0.3)).normalize()) ||
+        checkCollision(carPosition, forwardDir.clone().add(rightDir.multiplyScalar(0.3)).normalize());
+    }
+
+    // If collision detected, stop the car and reverse velocity slightly
+    if (hasCollision) {
+      velocityRef.current.multiplyScalar(-0.3); // Bounce back slightly
+    }
+
+    // Recalculate position after potential collision adjustment
+    const finalX = position.x + velocityRef.current.x;
+    const finalZ = position.z + velocityRef.current.z;
 
     // Raycast downward to detect terrain height
     raycaster.current.set(
-      new Vector3(newX, 100, newZ), // Start from high above
+      new Vector3(finalX, 100, finalZ), // Start from high above
       new Vector3(0, -1, 0) // Cast downward
     );
 
@@ -93,9 +144,9 @@ export const CarController = () => {
 
     // Update position with terrain following
     const newPosition = {
-      x: newX,
+      x: finalX,
       y: terrainHeight + carHeightOffset,
-      z: newZ,
+      z: finalZ,
     };
 
     // Update car rotation
@@ -108,8 +159,8 @@ export const CarController = () => {
     updatePosition(newPosition);
     updateRotation(currentRotation);
 
-    // Camera follows car (top-down view with slight angle)
-    const cameraOffset = new Vector3(0, 30, 20);
+    // Camera follows car (lower angle view)
+    const cameraOffset = new Vector3(0, 15, 20);
     const rotatedOffset = cameraOffset.applyAxisAngle(new Vector3(0, 1, 0), currentRotation);
     camera.position.set(
       newPosition.x + rotatedOffset.x,
@@ -121,7 +172,7 @@ export const CarController = () => {
 
   return (
     <group ref={carRef} position={[position.x, position.y, position.z]}>
-      <CarModel scale={0.25} />
+      <CarModel scale={0.17} />
       {/* Add a simple light to the car */}
       <pointLight position={[0, 5, 0]} intensity={1} distance={50} />
     </group>

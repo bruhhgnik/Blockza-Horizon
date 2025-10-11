@@ -18,6 +18,7 @@ export default function FloorGrid({
   const minor = useMemo(() => {
     const divisions = Math.max(1, Math.round(size / minorStep));
     const g = new THREE.GridHelper(size, divisions, 0x00ff00, 0x00ff00);
+    g.name = 'floorGrid';
     const mat = g.material as THREE.LineBasicMaterial;
     mat.transparent = true;
     mat.opacity = 0.15;
@@ -31,6 +32,7 @@ export default function FloorGrid({
   const major = useMemo(() => {
     const divisions = Math.max(1, Math.round(size / highlightStep));
     const g = new THREE.GridHelper(size, divisions, 0xffff00, 0xffff00);
+    g.name = 'floorGrid';
     const mat = g.material as THREE.LineBasicMaterial;
     mat.transparent = true;
     mat.opacity = 0.9;
