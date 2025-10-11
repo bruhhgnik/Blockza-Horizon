@@ -18,14 +18,16 @@ export const CarController = () => {
   const raycaster = useRef(new THREE.Raycaster());
   const collisionRaycaster = useRef(new THREE.Raycaster());
   const angularVelocityRef = useRef(0); // Rotational momentum
+  const cameraPosRef = useRef(new Vector3()); // Smooth camera position
 
-  const maxSpeed = 1.2; // Maximum speed
-  const acceleration = 0.07; // Gradual acceleration
-  const maxRotationSpeed = 0.04; // Maximum turn rate
-  const rotationAcceleration = 0.002; // How fast turning builds up
-  const rotationFriction = 0.85; // Rotational drag
-  const friction = 0.94; // Slightly higher friction
-  const lateralFriction = 0.92; // Sideways grip (prevents sliding)
+  // Slowroads-style smooth physics
+  const maxSpeed = 1.0; // Moderate maximum speed
+  const acceleration = 0.04; // Gentle, smooth acceleration
+  const maxRotationSpeed = 0.018; // Slow, gentle turning
+  const rotationAcceleration = 0.0008; // Very gradual turn buildup
+  const rotationFriction = 0.92; // Smooth rotational dampening
+  const friction = 0.97; // High friction for smooth coasting
+  const lateralFriction = 0.88; // Strong tire grip
   const carHeightOffset = 3; // Height above ground
   const collisionDistance = 5; // Distance to check for collisions ahead
 
@@ -85,8 +87,8 @@ export const CarController = () => {
       velocityRef.current.z * velocityRef.current.z
     );
 
-    // Speed-dependent turn rate (turn slower at high speeds, faster at low speeds)
-    const speedFactor = Math.max(0.3, 1 - currentSpeed / maxSpeed);
+    // Gentle speed-dependent turn rate (slowroads style - very subtle variation)
+    const speedFactor = Math.max(0.7, 1 - (currentSpeed / maxSpeed) * 0.4);
     const effectiveMaxRotation = maxRotationSpeed * speedFactor;
 
     // Rotation controls with angular velocity (torque-based)
@@ -169,9 +171,10 @@ export const CarController = () => {
         checkCollision(carPosition, forwardDir.clone().add(rightDir.multiplyScalar(0.3)).normalize());
     }
 
-    // If collision detected, stop the car and reverse velocity slightly
+    // If collision detected, smoothly slow down (slowroads style - gentle)
     if (hasCollision) {
-      velocityRef.current.multiplyScalar(-0.3); // Bounce back slightly
+      velocityRef.current.multiplyScalar(0.5); // Gentle deceleration, no harsh bounce
+      angularVelocityRef.current *= 0.7; // Also slow down rotation
     }
 
     // Recalculate position after potential collision adjustment
@@ -214,15 +217,29 @@ export const CarController = () => {
     updatePosition(newPosition);
     updateRotation(currentRotation);
 
-    // Camera follows car (lower angle view)
+    // Camera follows car smoothly (slowroads style)
     const cameraOffset = new Vector3(0, 15, 20);
     const rotatedOffset = cameraOffset.applyAxisAngle(new Vector3(0, 1, 0), currentRotation);
-    camera.position.set(
+
+    // Target camera position
+    const targetCameraPos = new Vector3(
       newPosition.x + rotatedOffset.x,
       newPosition.y + rotatedOffset.y,
       newPosition.z + rotatedOffset.z
     );
-    camera.lookAt(newPosition.x, newPosition.y, newPosition.z);
+
+    // Initialize camera position if first frame
+    if (cameraPosRef.current.length() === 0) {
+      cameraPosRef.current.copy(targetCameraPos);
+    }
+
+    // Smooth camera interpolation (lerp)
+    cameraPosRef.current.lerp(targetCameraPos, 0.08);
+    camera.position.copy(cameraPosRef.current);
+
+    // Smooth camera look-at
+    const lookAtTarget = new Vector3(newPosition.x, newPosition.y, newPosition.z);
+    camera.lookAt(lookAtTarget);
   });
 
   return (
