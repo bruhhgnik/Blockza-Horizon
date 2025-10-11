@@ -23,13 +23,14 @@ export const CarController = () => {
   // Slowroads-style smooth physics
   const maxSpeed = 1.0; // Moderate maximum speed
   const acceleration = 0.04; // Gentle, smooth acceleration
-  const maxRotationSpeed = 0.018; // Slow, gentle turning
-  const rotationAcceleration = 0.0008; // Very gradual turn buildup
-  const rotationFriction = 0.92; // Smooth rotational dampening
+  const maxRotationSpeed = 0.03; // Smooth continuous turning at any angle
+  const rotationAcceleration = 0.0012; // Responsive turning
+  const rotationFriction = 0.94; // Smooth rotational dampening
   const friction = 0.97; // High friction for smooth coasting
   const lateralFriction = 0.88; // Strong tire grip
   const carHeightOffset = 3; // Height above ground
   const collisionDistance = 5; // Distance to check for collisions ahead
+  const turnSpeedReduction = 0.2; // Gentle speed reduction during sharp turns (0-1)
 
   // Keyboard event handlers
   useEffect(() => {
@@ -87,20 +88,16 @@ export const CarController = () => {
       velocityRef.current.z * velocityRef.current.z
     );
 
-    // Gentle speed-dependent turn rate (slowroads style - very subtle variation)
-    const speedFactor = Math.max(0.7, 1 - (currentSpeed / maxSpeed) * 0.4);
-    const effectiveMaxRotation = maxRotationSpeed * speedFactor;
-
     // Rotation controls with angular velocity (torque-based)
     if (keys['a'] || keys['arrowleft']) {
       angularVelocityRef.current += rotationAcceleration;
-      if (angularVelocityRef.current > effectiveMaxRotation) {
-        angularVelocityRef.current = effectiveMaxRotation;
+      if (angularVelocityRef.current > maxRotationSpeed) {
+        angularVelocityRef.current = maxRotationSpeed;
       }
     } else if (keys['d'] || keys['arrowright']) {
       angularVelocityRef.current -= rotationAcceleration;
-      if (angularVelocityRef.current < -effectiveMaxRotation) {
-        angularVelocityRef.current = -effectiveMaxRotation;
+      if (angularVelocityRef.current < -maxRotationSpeed) {
+        angularVelocityRef.current = -maxRotationSpeed;
       }
     } else {
       // No input - apply rotational friction
@@ -109,6 +106,14 @@ export const CarController = () => {
 
     // Apply angular velocity to rotation
     currentRotation += angularVelocityRef.current;
+
+    // Calculate turn angle factor (0 = straight, 1 = maximum turn)
+    const turnAngleFactor = Math.abs(angularVelocityRef.current) / maxRotationSpeed;
+
+    // Reduce max speed based on turn angle - very gentle reduction
+    // Uses a gentle curve so only very sharp turns reduce speed noticeably
+    const turnSpeedFactor = 1 - (Math.pow(turnAngleFactor, 1.5) * turnSpeedReduction);
+    const effectiveMaxSpeed = maxSpeed * Math.max(0.8, turnSpeedFactor); // Never go below 80% speed
 
     // Forward/Backward controls (W/S or Up/Down arrows) - gradual acceleration
     if (keys['w'] || keys['arrowup']) {
@@ -144,9 +149,9 @@ export const CarController = () => {
       velocityRef.current.z * velocityRef.current.z
     );
 
-    // Cap speed at maximum
-    if (adjustedSpeed > maxSpeed) {
-      velocityRef.current.multiplyScalar(maxSpeed / adjustedSpeed);
+    // Cap speed at maximum (reduced during sharp turns)
+    if (adjustedSpeed > effectiveMaxSpeed) {
+      velocityRef.current.multiplyScalar(effectiveMaxSpeed / adjustedSpeed);
     }
 
     // Apply forward friction
