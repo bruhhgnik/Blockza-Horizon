@@ -121,7 +121,7 @@ export const CarController = () => {
 
   return (
     <group ref={carRef} position={[position.x, position.y, position.z]}>
-      <CarModel scale={1.2} />
+      <CarModel scale={0.25} />
       {/* Add a simple light to the car */}
       <pointLight position={[0, 5, 0]} intensity={1} distance={50} />
     </group>
