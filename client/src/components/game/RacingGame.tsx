@@ -17,11 +17,15 @@ export const CarController = () => {
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const raycaster = useRef(new THREE.Raycaster());
   const collisionRaycaster = useRef(new THREE.Raycaster());
+  const angularVelocityRef = useRef(0); // Rotational momentum
 
   const maxSpeed = 1.2; // Maximum speed
   const acceleration = 0.07; // Gradual acceleration
-  const rotationSpeed = 0.03;
+  const maxRotationSpeed = 0.04; // Maximum turn rate
+  const rotationAcceleration = 0.002; // How fast turning builds up
+  const rotationFriction = 0.85; // Rotational drag
   const friction = 0.94; // Slightly higher friction
+  const lateralFriction = 0.92; // Sideways grip (prevents sliding)
   const carHeightOffset = 3; // Height above ground
   const collisionDistance = 5; // Distance to check for collisions ahead
 
@@ -75,13 +79,34 @@ export const CarController = () => {
     const keys = keysPressed.current;
     let currentRotation = carRef.current.rotation.y;
 
-    // Rotation controls (A/D or Left/Right arrows)
+    // Calculate current speed
+    const currentSpeed = Math.sqrt(
+      velocityRef.current.x * velocityRef.current.x +
+      velocityRef.current.z * velocityRef.current.z
+    );
+
+    // Speed-dependent turn rate (turn slower at high speeds, faster at low speeds)
+    const speedFactor = Math.max(0.3, 1 - currentSpeed / maxSpeed);
+    const effectiveMaxRotation = maxRotationSpeed * speedFactor;
+
+    // Rotation controls with angular velocity (torque-based)
     if (keys['a'] || keys['arrowleft']) {
-      currentRotation += rotationSpeed;
+      angularVelocityRef.current += rotationAcceleration;
+      if (angularVelocityRef.current > effectiveMaxRotation) {
+        angularVelocityRef.current = effectiveMaxRotation;
+      }
+    } else if (keys['d'] || keys['arrowright']) {
+      angularVelocityRef.current -= rotationAcceleration;
+      if (angularVelocityRef.current < -effectiveMaxRotation) {
+        angularVelocityRef.current = -effectiveMaxRotation;
+      }
+    } else {
+      // No input - apply rotational friction
+      angularVelocityRef.current *= rotationFriction;
     }
-    if (keys['d'] || keys['arrowright']) {
-      currentRotation -= rotationSpeed;
-    }
+
+    // Apply angular velocity to rotation
+    currentRotation += angularVelocityRef.current;
 
     // Forward/Backward controls (W/S or Up/Down arrows) - gradual acceleration
     if (keys['w'] || keys['arrowup']) {
@@ -93,18 +118,36 @@ export const CarController = () => {
       velocityRef.current.z += Math.cos(currentRotation) * acceleration;
     }
 
-    // Calculate current speed
-    const currentSpeed = Math.sqrt(
+    // Calculate forward and lateral vectors relative to car orientation
+    const forwardDir = new Vector3(-Math.sin(currentRotation), 0, -Math.cos(currentRotation));
+    const rightDir = new Vector3(Math.cos(currentRotation), 0, -Math.sin(currentRotation));
+
+    // Project velocity onto forward and lateral directions
+    const forwardVelocity = velocityRef.current.dot(forwardDir);
+    const lateralVelocity = velocityRef.current.dot(rightDir);
+
+    // Apply lateral friction (tire grip) - resist sideways motion
+    const adjustedLateralVelocity = lateralVelocity * lateralFriction;
+
+    // Reconstruct velocity with reduced lateral component (simulates tire grip)
+    velocityRef.current.copy(
+      forwardDir.multiplyScalar(forwardVelocity).add(
+        rightDir.multiplyScalar(adjustedLateralVelocity)
+      )
+    );
+
+    // Recalculate speed after lateral friction
+    const adjustedSpeed = Math.sqrt(
       velocityRef.current.x * velocityRef.current.x +
       velocityRef.current.z * velocityRef.current.z
     );
 
     // Cap speed at maximum
-    if (currentSpeed > maxSpeed) {
-      velocityRef.current.multiplyScalar(maxSpeed / currentSpeed);
+    if (adjustedSpeed > maxSpeed) {
+      velocityRef.current.multiplyScalar(maxSpeed / adjustedSpeed);
     }
 
-    // Apply friction
+    // Apply forward friction
     velocityRef.current.multiplyScalar(friction);
 
     // Check for collisions in multiple directions around the car
