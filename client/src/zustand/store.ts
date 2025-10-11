@@ -289,7 +289,7 @@ const initialState: AppState = {
   showGun: false,
   showCrosshair: true,
   showMapTracker: true,
-  position: { x: 400, y: 1.5, z: 400 },
+  position: { x: 400, y: 10, z: 400 },
   rotation: 0,
   moving: false,
   velocity: { x: 0, y: 0, z: 0 },

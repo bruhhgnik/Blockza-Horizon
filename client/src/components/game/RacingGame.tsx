@@ -9,16 +9,18 @@ import useAppStore from '../../zustand/store';
 
 // Car controls component
 export const CarController = () => {
-  const { camera } = useThree();
+  const { camera, scene } = useThree();
   const { position, updatePosition, updateRotation } = useAppStore();
 
   const carRef = useRef<THREE.Group>(null);
   const velocityRef = useRef(new Vector3(0, 0, 0));
   const keysPressed = useRef<{ [key: string]: boolean }>({});
+  const raycaster = useRef(new THREE.Raycaster());
 
   const speed = 0.5;
   const rotationSpeed = 0.03;
   const friction = 0.92;
+  const carHeightOffset = 3; // Height above ground
 
   // Keyboard event handlers
   useEffect(() => {
@@ -66,11 +68,34 @@ export const CarController = () => {
     // Apply friction
     velocityRef.current.multiplyScalar(friction);
 
-    // Update position
+    // Calculate new X and Z position
+    const newX = position.x + velocityRef.current.x;
+    const newZ = position.z + velocityRef.current.z;
+
+    // Raycast downward to detect terrain height
+    raycaster.current.set(
+      new Vector3(newX, 100, newZ), // Start from high above
+      new Vector3(0, -1, 0) // Cast downward
+    );
+
+    // Get all intersections with the scene
+    const intersects = raycaster.current.intersectObjects(scene.children, true);
+
+    // Find terrain height (first hit that's not the car itself)
+    let terrainHeight = 0;
+    for (const intersect of intersects) {
+      // Skip the car and its children
+      if (carRef.current && !carRef.current.getObjectById(intersect.object.id)) {
+        terrainHeight = intersect.point.y;
+        break;
+      }
+    }
+
+    // Update position with terrain following
     const newPosition = {
-      x: position.x + velocityRef.current.x,
-      y: position.y,
-      z: position.z + velocityRef.current.z,
+      x: newX,
+      y: terrainHeight + carHeightOffset,
+      z: newZ,
     };
 
     // Update car rotation
