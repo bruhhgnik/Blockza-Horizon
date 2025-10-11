@@ -8,7 +8,7 @@ Title: Lowpoly F1 Car
 */
 
 import * as THREE from 'three'
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 import { GLTF } from 'three-stdlib'
 
@@ -19,14 +19,44 @@ type GLTFResult = GLTF & {
   materials: {
     Material: THREE.MeshStandardMaterial
   }
-  animations: GLTFAction[]
 }
 
 export function Model(props: JSX.IntrinsicElements['group']) {
   const { nodes, materials } = useGLTF('/car.glb') as GLTFResult
+
+  // Clone and configure material to ensure proper rendering
+  const carMaterial = useMemo(() => {
+    const mat = materials.Material.clone();
+
+    // Enable vertex colors if the geometry has them
+    mat.vertexColors = (nodes.Object_2.geometry.attributes.color !== undefined);
+
+    // Configure material properties
+    mat.metalness = 0.3;
+    mat.roughness = 0.7;
+    mat.side = THREE.DoubleSide;
+
+    // If there's a texture map, configure it
+    if (mat.map) {
+      mat.map.encoding = THREE.sRGBEncoding;
+      mat.map.needsUpdate = true;
+    }
+
+    // Ensure the material reflects light properly
+    mat.needsUpdate = true;
+
+    return mat;
+  }, [materials.Material, nodes.Object_2.geometry]);
+
   return (
     <group {...props} dispose={null}>
-      <mesh geometry={nodes.Object_2.geometry} material={materials.Material} rotation={[-Math.PI / 2, 0, 0]} />
+      <mesh
+        geometry={nodes.Object_2.geometry}
+        material={carMaterial}
+        rotation={[-Math.PI / 2, 0, 0]}
+        castShadow
+        receiveShadow
+      />
     </group>
   )
 }

@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import * as THREE from 'three';
-import { Model as CarModel } from '../../models/Car';
+import { Model as CarModel } from '../../models/Car2';
 import { Model as MapModel } from '../../models/Map';
 import FloorGrid from './FloorGrid';
 import useAppStore from '../../zustand/store';
@@ -121,7 +121,7 @@ export const CarController = () => {
 
   return (
     <group ref={carRef} position={[position.x, position.y, position.z]}>
-      <CarModel scale={0.5} />
+      <CarModel scale={1.2} />
       {/* Add a simple light to the car */}
       <pointLight position={[0, 5, 0]} intensity={1} distance={50} />
     </group>
@@ -132,10 +132,11 @@ export const CarController = () => {
 export const RacingGame = () => {
   return (
     <>
-      {/* Ambient lighting */}
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[100, 100, 50]} intensity={1.2} />
-      <hemisphereLight args={['#ffffff', '#444444', 0.5]} />
+      {/* Enhanced lighting to show car colors */}
+      <ambientLight intensity={1.2} />
+      <directionalLight position={[100, 100, 50]} intensity={1.5} castShadow />
+      <directionalLight position={[-100, 100, -50]} intensity={0.8} />
+      <hemisphereLight args={['#ffffff', '#666666', 0.8]} />
 
       {/* Floor grid */}
       <FloorGrid />
