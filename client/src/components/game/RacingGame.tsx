@@ -18,9 +18,10 @@ export const CarController = () => {
   const raycaster = useRef(new THREE.Raycaster());
   const collisionRaycaster = useRef(new THREE.Raycaster());
 
-  const speed = 0.5;
+  const maxSpeed = 0.4; // Reduced maximum speed
+  const acceleration = 0.03; // Gradual acceleration
   const rotationSpeed = 0.03;
-  const friction = 0.92;
+  const friction = 0.94; // Slightly higher friction
   const carHeightOffset = 3; // Height above ground
   const collisionDistance = 5; // Distance to check for collisions ahead
 
@@ -82,14 +83,25 @@ export const CarController = () => {
       currentRotation -= rotationSpeed;
     }
 
-    // Forward/Backward controls (W/S or Up/Down arrows)
+    // Forward/Backward controls (W/S or Up/Down arrows) - gradual acceleration
     if (keys['w'] || keys['arrowup']) {
-      velocityRef.current.x -= Math.sin(currentRotation) * speed;
-      velocityRef.current.z -= Math.cos(currentRotation) * speed;
+      velocityRef.current.x -= Math.sin(currentRotation) * acceleration;
+      velocityRef.current.z -= Math.cos(currentRotation) * acceleration;
     }
     if (keys['s'] || keys['arrowdown']) {
-      velocityRef.current.x += Math.sin(currentRotation) * speed;
-      velocityRef.current.z += Math.cos(currentRotation) * speed;
+      velocityRef.current.x += Math.sin(currentRotation) * acceleration;
+      velocityRef.current.z += Math.cos(currentRotation) * acceleration;
+    }
+
+    // Calculate current speed
+    const currentSpeed = Math.sqrt(
+      velocityRef.current.x * velocityRef.current.x +
+      velocityRef.current.z * velocityRef.current.z
+    );
+
+    // Cap speed at maximum
+    if (currentSpeed > maxSpeed) {
+      velocityRef.current.multiplyScalar(maxSpeed / currentSpeed);
     }
 
     // Apply friction
