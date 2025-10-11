@@ -18,8 +18,8 @@ export const CarController = () => {
   const raycaster = useRef(new THREE.Raycaster());
   const collisionRaycaster = useRef(new THREE.Raycaster());
 
-  const maxSpeed = 0.4; // Reduced maximum speed
-  const acceleration = 0.03; // Gradual acceleration
+  const maxSpeed = 1.2; // Maximum speed
+  const acceleration = 0.07; // Gradual acceleration
   const rotationSpeed = 0.03;
   const friction = 0.94; // Slightly higher friction
   const carHeightOffset = 3; // Height above ground
