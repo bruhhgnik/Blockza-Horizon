@@ -2,8 +2,8 @@ import { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import * as THREE from 'three';
-import { Model as Car } from '../../models/Car';
-import { Model as Map } from '../../models/Map';
+import { Model as CarModel } from '../../models/Car';
+import { Model as MapModel } from '../../models/Map';
 import FloorGrid from './FloorGrid';
 import useAppStore from '../../zustand/store';
 
@@ -96,7 +96,7 @@ export const CarController = () => {
 
   return (
     <group ref={carRef} position={[position.x, position.y, position.z]}>
-      <Car scale={0.5} />
+      <CarModel scale={0.5} />
       {/* Add a simple light to the car */}
       <pointLight position={[0, 5, 0]} intensity={1} distance={50} />
     </group>
@@ -108,14 +108,15 @@ export const RacingGame = () => {
   return (
     <>
       {/* Ambient lighting */}
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[10, 10, 5]} intensity={0.8} />
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[100, 100, 50]} intensity={1.2} />
+      <hemisphereLight args={['#ffffff', '#444444', 0.5]} />
 
       {/* Floor grid */}
       <FloorGrid />
 
-      {/* Racing map */}
-      <Map position={[0, 0, 0]} />
+      {/* Racing map - positioned and scaled to match car starting position */}
+      <MapModel position={[400, 0, 400]} scale={100} />
 
       {/* Car with controls */}
       <CarController />

@@ -1,14 +1,13 @@
-import React, { useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { TransactionPopup } from "../components/ui/TransactionPopup";
 import { usePlayerMovement } from "../dojo/hooks/usePlayerMovement";
-import useAppStore, { GamePhase } from "../zustand/store";
+import useAppStore from "../zustand/store";
 import { MainMenu } from "../components/ui/MainMenu";
 import { RacingGame } from "../components/game/RacingGame";
 import BlockroomsCard from "../components/ui/BlockroomsCard";
 
 const App = () => {
-  const { gameStarted, gamePhase } = useAppStore();
+  const { gameStarted } = useAppStore();
 
   // Track onchain movement
   const {
