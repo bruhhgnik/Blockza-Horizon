@@ -1,0 +1,54 @@
+import React, { useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { TransactionPopup } from "../components/ui/TransactionPopup";
+import { usePlayerMovement } from "../dojo/hooks/usePlayerMovement";
+import useAppStore, { GamePhase } from "../zustand/store";
+import { MainMenu } from "../components/ui/MainMenu";
+import { RacingGame } from "../components/game/RacingGame";
+import BlockroomsCard from "../components/ui/BlockroomsCard";
+
+const App = () => {
+  const { gameStarted, gamePhase } = useAppStore();
+
+  // Track onchain movement
+  const {
+    showTransactionPopup,
+    transactionError,
+    isProcessingTransaction,
+    closeTransactionPopup,
+  } = usePlayerMovement();
+
+  return (
+    <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
+      {/* Show main menu if game hasn't started */}
+      {!gameStarted && <MainMenu />}
+
+      {/* Show BlockroomsCard in the corner */}
+      {gameStarted && <BlockroomsCard />}
+
+      {/* 3D Canvas - Racing Game */}
+      {gameStarted && (
+        <Canvas
+          camera={{ position: [0, 30, 20], fov: 75 }}
+          style={{
+            width: "100%",
+            height: "100%",
+            background: "linear-gradient(to bottom, #1a1a2e 0%, #0f0f1e 100%)",
+          }}
+        >
+          <RacingGame />
+        </Canvas>
+      )}
+
+      {/* Transaction popup for onchain movements */}
+      <TransactionPopup
+        isVisible={showTransactionPopup}
+        isLoading={isProcessingTransaction}
+        error={transactionError}
+        onClose={closeTransactionPopup}
+      />
+    </div>
+  );
+};
+
+export default App;
