@@ -256,21 +256,46 @@ const handlePlayForFree = async (): Promise<void> => {
   try {
     // Step 1: Connect wallet if not connected
     if (!isConnected) {
+      console.log('🔌 Connecting wallet...');
       await handleConnect();
       await new Promise((r) => setTimeout(r, 1500));
       await refetch();
-      // Continue to next step automatically
+
+      // CRITICAL: Verify wallet is actually connected before proceeding
+      const currentStatus = useAppStore.getState().connectionStatus;
+      if (currentStatus !== 'connected') {
+        console.error('❌ Wallet connection failed');
+        alert('Please connect your wallet to play');
+        return; // STOP - don't start game
+      }
+      console.log('✅ Wallet connected');
     }
 
     // Step 2: Initialize player if needed
     if (!hasPlayerStats && canInitialize) {
+      console.log('🎮 Initializing player...');
       const res = await initializePlayer();
-      if (res?.success) {
-        await new Promise((r) => setTimeout(r, 2000));
-        await refetch();
+      if (!res?.success) {
+        console.error('❌ Player initialization failed');
+        alert('Failed to initialize player. Please try again.');
+        return; // STOP - don't start game
       }
-      // Continue to next step automatically
+      await new Promise((r) => setTimeout(r, 2000));
+      await refetch();
+      console.log('✅ Player initialized');
     }
+
+    // FINAL VERIFICATION: Ensure we have all requirements before starting game
+    await refetch(); // One final refetch to get latest state
+    const finalState = useAppStore.getState();
+
+    if (!finalState.playerStats) {
+      console.error('❌ Missing player stats - cannot start game');
+      alert('Player data not found. Please try again.');
+      return; // STOP
+    }
+
+    console.log('✅ All requirements met, starting game...');
 
     // Step 3: Enter the game (with session cleanup if needed)
     stopBgmWithFade(700);
@@ -301,13 +326,17 @@ const handlePlayForFree = async (): Promise<void> => {
     // Start a fresh session if allowed
     if (canStartGame) {
       try {
+        console.log('🎲 Starting new game session...');
         await startGame();
         // One extra refetch burst
         await refetch();
         await new Promise((r) => setTimeout(r, 250));
         await refetch();
-      } catch {
-        // swallow; UI flow continues
+        console.log('✅ Game session started');
+      } catch (err) {
+        console.error('❌ Failed to start game session:', err);
+        alert('Failed to start game session. Please try again.');
+        return; // STOP
       }
     }
 
@@ -319,12 +348,10 @@ const handlePlayForFree = async (): Promise<void> => {
     // Start tutorial sequence: black screen -> video -> game
     setShowBlackScreen(true);
   } catch (error) {
-    console.error('Error in play flow:', error);
-    // Still try to start the game even if something failed
-    // Also reset race state even on error
-    resetRace();
-    initializeRace();
-    setShowBlackScreen(true);
+    console.error('❌ Critical error in play flow:', error);
+    alert(`Failed to start game: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    // DO NOT START GAME ON ERROR
+    return;
   }
 };
 

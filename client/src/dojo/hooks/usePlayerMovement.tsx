@@ -11,12 +11,13 @@ interface UsePlayerMovementReturn {
 }
 
 export const usePlayerMovement = (): UsePlayerMovementReturn => {
-  const { position, updatePosition } = useAppStore();
+  const { position, updatePosition, player, gamePhase, raceStarted } = useAppStore();
   const { movePlayer, isLoading, error } = useMovePlayer();
-  
-  
+
+
   const lastVerifiedPosition = useRef<{ x: number; z: number }>({ x: 400, z: 400 });
   const isProcessingBoundary = useRef<boolean>(false);
+  const lastRaceState = useRef<boolean>(false);
   
   
   const [showTransactionPopup, setShowTransactionPopup] = useState(false);
@@ -144,6 +145,23 @@ export const usePlayerMovement = (): UsePlayerMovementReturn => {
     }
   }, [movePlayer, handleTransactionSuccess, handleTransactionFailure]);
 
+
+  // Reset lastVerifiedPosition when switching between racing and dungeon modes
+  useEffect(() => {
+    if (raceStarted !== lastRaceState.current) {
+      lastRaceState.current = raceStarted;
+
+      if (raceStarted) {
+        // Switching to racing mode - reset to racing start position
+        lastVerifiedPosition.current = { x: 283, z: 458 };
+        console.log('🏎️ Racing mode: Reset verified position to racing start:', lastVerifiedPosition.current);
+      } else {
+        // Switching to dungeon mode - reset to dungeon start position
+        lastVerifiedPosition.current = { x: 400, z: 400 };
+        console.log('🏰 Dungeon mode: Reset verified position to dungeon start:', lastVerifiedPosition.current);
+      }
+    }
+  }, [raceStarted]);
 
   useEffect(() => {
     if (isProcessingBoundary.current) return;

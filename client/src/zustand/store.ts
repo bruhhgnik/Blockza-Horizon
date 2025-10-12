@@ -741,7 +741,7 @@ const useAppStore = create<AppStore>()(
 
       resetRace: () => {
         console.log('🔄 Resetting race - clearing all data');
-        set((state) => ({
+        set({
           countdownValue: 3,
           raceStarted: false,
           raceFinished: false,
@@ -749,14 +749,9 @@ const useAppStore = create<AppStore>()(
           position: { x: 283, y: 10, z: 458 },
           rotation: 0,
           velocity: { x: 0, y: 0, z: 0 },
-          // Force clear blockchain game session state
-          player: state.player ? {
-            ...state.player,
-            game_active: false
-          } : null,
-          gamePhase: GamePhase.INITIALIZED,
-          canTakeActions: false,
-        }));
+          // Note: We don't modify player.game_active here - that's blockchain state
+          // The movement hook guards will prevent racing movements from being sent
+        });
       },
 
       // Utility getters
