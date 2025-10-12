@@ -5,6 +5,8 @@ import useAppStore from "../zustand/store";
 import { MainMenu } from "../components/ui/MainMenu";
 import { RacingGame } from "../components/game/RacingGame";
 import BlockroomsCard from "../components/ui/BlockroomsCard";
+import { CountdownOverlay } from "../components/ui/CountdownOverlay";
+import { Leaderboard } from "../components/ui/Leaderboard";
 
 const App = () => {
   const { gameStarted } = useAppStore();
@@ -24,6 +26,12 @@ const App = () => {
 
       {/* Show BlockroomsCard in the corner */}
       {gameStarted && <BlockroomsCard />}
+
+      {/* Countdown overlay */}
+      {gameStarted && <CountdownOverlay />}
+
+      {/* Leaderboard */}
+      {gameStarted && <Leaderboard />}
 
       {/* 3D Canvas - Racing Game */}
       {gameStarted && (

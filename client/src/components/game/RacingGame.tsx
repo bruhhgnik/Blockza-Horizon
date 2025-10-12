@@ -6,31 +6,46 @@ import { Model as CarModel } from '../../models/Car2';
 import { Model as MapModel } from '../../models/Map';
 import FloorGrid from './FloorGrid';
 import useAppStore from '../../zustand/store';
+import { AICar } from './AICar';
+import { FinishLine } from './FinishLine';
+import { updateCarPhysics, CAR_PHYSICS } from './carPhysics';
 
 // Car controls component
 export const CarController = () => {
   const { camera, scene } = useThree();
-  const { position, updatePosition, updateRotation } = useAppStore();
+  const {
+    position,
+    updatePosition,
+    updateRotation,
+    raceStarted,
+    initializeRace,
+    startRaceCountdown,
+    updateCarPosition,
+  } = useAppStore();
 
   const carRef = useRef<THREE.Group>(null);
   const velocityRef = useRef(new Vector3(0, 0, 0));
+  const angularVelocityRef = useRef(0);
+  const positionRef = useRef(new Vector3(position.x, position.y, position.z));
+  const rotationRef = useRef(0);
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const raycaster = useRef(new THREE.Raycaster());
   const collisionRaycaster = useRef(new THREE.Raycaster());
-  const angularVelocityRef = useRef(0); // Rotational momentum
-  const cameraPosRef = useRef(new Vector3()); // Smooth camera position
+  const cameraPosRef = useRef(new Vector3());
+  const raceInitializedRef = useRef(false);
+  const collisionDistance = 5;
 
-  // Slowroads-style smooth physics
-  const maxSpeed = 1.0; // Moderate maximum speed
-  const acceleration = 0.04; // Gentle, smooth acceleration
-  const maxRotationSpeed = 0.03; // Smooth continuous turning at any angle
-  const rotationAcceleration = 0.0012; // Responsive turning
-  const rotationFriction = 0.94; // Smooth rotational dampening
-  const friction = 0.97; // High friction for smooth coasting
-  const lateralFriction = 0.88; // Strong tire grip
-  const carHeightOffset = 3; // Height above ground
-  const collisionDistance = 5; // Distance to check for collisions ahead
-  const turnSpeedReduction = 0.2; // Gentle speed reduction during sharp turns (0-1)
+  // Initialize race and start countdown
+  useEffect(() => {
+    if (!raceInitializedRef.current) {
+      raceInitializedRef.current = true;
+      initializeRace();
+      // Start countdown after a short delay
+      setTimeout(() => {
+        startRaceCountdown();
+      }, 500);
+    }
+  }, [initializeRace, startRaceCountdown]);
 
   // Keyboard event handlers
   useEffect(() => {
@@ -80,85 +95,31 @@ export const CarController = () => {
     if (!carRef.current) return;
 
     const keys = keysPressed.current;
-    let currentRotation = carRef.current.rotation.y;
 
-    // Calculate current speed
-    const currentSpeed = Math.sqrt(
-      velocityRef.current.x * velocityRef.current.x +
-      velocityRef.current.z * velocityRef.current.z
-    );
-
-    // Rotation controls with angular velocity (torque-based)
-    if (keys['a'] || keys['arrowleft']) {
-      angularVelocityRef.current += rotationAcceleration;
-      if (angularVelocityRef.current > maxRotationSpeed) {
-        angularVelocityRef.current = maxRotationSpeed;
+    // Apply unified physics (only if race started)
+    const newState = updateCarPhysics(
+      {
+        velocity: velocityRef.current,
+        angularVelocity: angularVelocityRef.current,
+        position: positionRef.current,
+        rotation: rotationRef.current,
+      },
+      {
+        forward: raceStarted && (keys['w'] || keys['arrowup']),
+        backward: raceStarted && (keys['s'] || keys['arrowdown']),
+        left: keys['a'] || keys['arrowleft'],
+        right: keys['d'] || keys['arrowright'],
       }
-    } else if (keys['d'] || keys['arrowright']) {
-      angularVelocityRef.current -= rotationAcceleration;
-      if (angularVelocityRef.current < -maxRotationSpeed) {
-        angularVelocityRef.current = -maxRotationSpeed;
-      }
-    } else {
-      // No input - apply rotational friction
-      angularVelocityRef.current *= rotationFriction;
-    }
-
-    // Apply angular velocity to rotation
-    currentRotation += angularVelocityRef.current;
-
-    // Calculate turn angle factor (0 = straight, 1 = maximum turn)
-    const turnAngleFactor = Math.abs(angularVelocityRef.current) / maxRotationSpeed;
-
-    // Reduce max speed based on turn angle - very gentle reduction
-    // Uses a gentle curve so only very sharp turns reduce speed noticeably
-    const turnSpeedFactor = 1 - (Math.pow(turnAngleFactor, 1.5) * turnSpeedReduction);
-    const effectiveMaxSpeed = maxSpeed * Math.max(0.8, turnSpeedFactor); // Never go below 80% speed
-
-    // Forward/Backward controls (W/S or Up/Down arrows) - gradual acceleration
-    if (keys['w'] || keys['arrowup']) {
-      velocityRef.current.x -= Math.sin(currentRotation) * acceleration;
-      velocityRef.current.z -= Math.cos(currentRotation) * acceleration;
-    }
-    if (keys['s'] || keys['arrowdown']) {
-      velocityRef.current.x += Math.sin(currentRotation) * acceleration;
-      velocityRef.current.z += Math.cos(currentRotation) * acceleration;
-    }
-
-    // Calculate forward and lateral vectors relative to car orientation
-    const forwardDir = new Vector3(-Math.sin(currentRotation), 0, -Math.cos(currentRotation));
-    const rightDir = new Vector3(Math.cos(currentRotation), 0, -Math.sin(currentRotation));
-
-    // Project velocity onto forward and lateral directions
-    const forwardVelocity = velocityRef.current.dot(forwardDir);
-    const lateralVelocity = velocityRef.current.dot(rightDir);
-
-    // Apply lateral friction (tire grip) - resist sideways motion
-    const adjustedLateralVelocity = lateralVelocity * lateralFriction;
-
-    // Reconstruct velocity with reduced lateral component (simulates tire grip)
-    velocityRef.current.copy(
-      forwardDir.multiplyScalar(forwardVelocity).add(
-        rightDir.multiplyScalar(adjustedLateralVelocity)
-      )
     );
 
-    // Recalculate speed after lateral friction
-    const adjustedSpeed = Math.sqrt(
-      velocityRef.current.x * velocityRef.current.x +
-      velocityRef.current.z * velocityRef.current.z
-    );
-
-    // Cap speed at maximum (reduced during sharp turns)
-    if (adjustedSpeed > effectiveMaxSpeed) {
-      velocityRef.current.multiplyScalar(effectiveMaxSpeed / adjustedSpeed);
-    }
-
-    // Apply forward friction
-    velocityRef.current.multiplyScalar(friction);
+    // Update refs
+    velocityRef.current = newState.velocity;
+    angularVelocityRef.current = newState.angularVelocity;
+    positionRef.current = newState.position;
+    rotationRef.current = newState.rotation;
 
     // Check for collisions in multiple directions around the car
-    const carPosition = new Vector3(position.x, position.y, position.z);
+    const carPosition = new Vector3(positionRef.current.x, positionRef.current.y, positionRef.current.z);
     const movementDirection = new Vector3(velocityRef.current.x, 0, velocityRef.current.z);
 
     // If we're moving, check for collisions
@@ -176,29 +137,23 @@ export const CarController = () => {
         checkCollision(carPosition, forwardDir.clone().add(rightDir.multiplyScalar(0.3)).normalize());
     }
 
-    // If collision detected, smoothly slow down (slowroads style - gentle)
+    // If collision detected, smoothly slow down
     if (hasCollision) {
-      velocityRef.current.multiplyScalar(0.5); // Gentle deceleration, no harsh bounce
-      angularVelocityRef.current *= 0.7; // Also slow down rotation
+      velocityRef.current.multiplyScalar(0.5);
+      angularVelocityRef.current *= 0.7;
+      positionRef.current = new Vector3(position.x, position.y, position.z); // Reset to last good position
     }
-
-    // Recalculate position after potential collision adjustment
-    const finalX = position.x + velocityRef.current.x;
-    const finalZ = position.z + velocityRef.current.z;
 
     // Raycast downward to detect terrain height
     raycaster.current.set(
-      new Vector3(finalX, 100, finalZ), // Start from high above
-      new Vector3(0, -1, 0) // Cast downward
+      new Vector3(positionRef.current.x, 100, positionRef.current.z),
+      new Vector3(0, -1, 0)
     );
 
-    // Get all intersections with the scene
     const intersects = raycaster.current.intersectObjects(scene.children, true);
 
-    // Find terrain height (first hit that's not the car itself)
     let terrainHeight = 0;
     for (const intersect of intersects) {
-      // Skip the car and its children
       if (carRef.current && !carRef.current.getObjectById(intersect.object.id)) {
         terrainHeight = intersect.point.y;
         break;
@@ -206,25 +161,29 @@ export const CarController = () => {
     }
 
     // Update position with terrain following
+    positionRef.current.y = terrainHeight + CAR_PHYSICS.carHeightOffset;
+
     const newPosition = {
-      x: finalX,
-      y: terrainHeight + carHeightOffset,
-      z: finalZ,
+      x: positionRef.current.x,
+      y: positionRef.current.y,
+      z: positionRef.current.z,
     };
 
-    // Update car rotation
-    carRef.current.rotation.y = currentRotation;
-
-    // Update car position
+    // Update car rotation and position
+    carRef.current.rotation.y = rotationRef.current;
     carRef.current.position.set(newPosition.x, newPosition.y, newPosition.z);
 
-    // Update store
+    // Update store and car position in race state
     updatePosition(newPosition);
-    updateRotation(currentRotation);
+    updateRotation(rotationRef.current);
 
-    // Camera follows car smoothly (slowroads style)
+    // Update car position in race leaderboard
+    const lapProgress = 0; // Placeholder
+    updateCarPosition('player', newPosition, rotationRef.current, lapProgress);
+
+    // Camera follows car smoothly
     const cameraOffset = new Vector3(0, 15, 20);
-    const rotatedOffset = cameraOffset.applyAxisAngle(new Vector3(0, 1, 0), currentRotation);
+    const rotatedOffset = cameraOffset.applyAxisAngle(new Vector3(0, 1, 0), rotationRef.current);
 
     // Target camera position
     const targetCameraPos = new Vector3(
@@ -258,6 +217,16 @@ export const CarController = () => {
 
 // Main racing game scene
 export const RacingGame = () => {
+  // AI car starting positions (2 cars per row, 3 rows)
+  const aiCarPositions = [
+    { id: 'ai-1', x: 290, y: 10, z: 458, color: '#ff0000' },  // Row 1, Right - Red
+    { id: 'ai-2', x: 276, y: 10, z: 458, color: '#00ff00' },  // Row 1, Left - Green
+    { id: 'ai-3', x: 290, y: 10, z: 450, color: '#0000ff' },  // Row 2, Right - Blue
+    { id: 'ai-4', x: 276, y: 10, z: 450, color: '#ffff00' },  // Row 2, Left - Yellow
+    { id: 'ai-5', x: 290, y: 10, z: 442, color: '#ff00ff' },  // Row 3, Right - Magenta
+    { id: 'ai-6', x: 276, y: 10, z: 442, color: '#00ffff' },  // Row 3, Left - Cyan
+  ];
+
   return (
     <>
       {/* Enhanced lighting to show car colors */}
@@ -272,8 +241,21 @@ export const RacingGame = () => {
       {/* Racing map - positioned and scaled to match car starting position */}
       <MapModel position={[400, 0, 400]} scale={100} />
 
-      {/* Car with controls */}
+      {/* Finish line */}
+      <FinishLine />
+
+      {/* Player car with controls */}
       <CarController />
+
+      {/* AI cars */}
+      {aiCarPositions.map((pos) => (
+        <AICar
+          key={pos.id}
+          carId={pos.id}
+          startPosition={{ x: pos.x, y: pos.y, z: pos.z }}
+          color={pos.color}
+        />
+      ))}
     </>
   );
 };

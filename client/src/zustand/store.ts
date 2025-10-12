@@ -80,6 +80,19 @@ interface AppState {
   moving: boolean;
   velocity: { x: number; y: number; z: number };
   activeWeapon: "pistol" | "shotgun";
+
+  // Racing game state
+  countdownValue: number | null; // 3, 2, 1, 0 for GO, null when countdown done
+  raceStarted: boolean;
+  raceFinished: boolean;
+  carPositions: {
+    id: string;
+    name: string;
+    position: { x: number; y: number; z: number };
+    rotation: number;
+    finishTime: number | null;
+    lapProgress: number; // 0 to 1
+  }[];
 }
 
 // Define actions interface
@@ -152,6 +165,16 @@ interface AppActions {
   setMoving: (moving: boolean) => void;
   setVelocity: (velocity: { x: number; y: number; z: number }) => void;
   setActiveWeapon: (weapon: "pistol" | "shotgun") => void;
+
+  // Racing game actions
+  setCountdownValue: (value: number | null) => void;
+  startRaceCountdown: () => void;
+  setRaceStarted: (started: boolean) => void;
+  setRaceFinished: (finished: boolean) => void;
+  updateCarPosition: (carId: string, position: { x: number; y: number; z: number }, rotation: number, lapProgress: number) => void;
+  setCarFinished: (carId: string, finishTime: number) => void;
+  initializeRace: () => void;
+  resetRace: () => void;
 
   // Utility getters
   canMove: () => boolean;
@@ -289,11 +312,17 @@ const initialState: AppState = {
   showGun: false,
   showCrosshair: true,
   showMapTracker: true,
-  position: { x: 400, y: 10, z: 400 },
+  position: { x: 283, y: 10, z: 458 }, // Starting position for race
   rotation: 0,
   moving: false,
   velocity: { x: 0, y: 0, z: 0 },
   activeWeapon: "pistol",
+
+  // Racing game state
+  countdownValue: 3,
+  raceStarted: false,
+  raceFinished: false,
+  carPositions: [],
 };
 
 // Maximum recent events to keep (for performance)
@@ -629,6 +658,91 @@ const useAppStore = create<AppStore>()(
       setMoving: (moving) => set({ moving }),
       setVelocity: (velocity) => set({ velocity }),
       setActiveWeapon: (activeWeapon) => set({ activeWeapon }),
+
+      // Racing game actions
+      setCountdownValue: (countdownValue) => set({ countdownValue }),
+
+      startRaceCountdown: () => {
+        console.log('🏁 Starting race countdown...');
+        set({ countdownValue: 3, raceStarted: false, raceFinished: false });
+
+        // Countdown timer
+        const countdownInterval = setInterval(() => {
+          const state = get();
+          console.log('Countdown tick:', state.countdownValue, 'raceStarted:', state.raceStarted);
+          if (state.countdownValue !== null && state.countdownValue > 0) {
+            set({ countdownValue: state.countdownValue - 1 });
+          } else {
+            console.log('🚗 RACE STARTED!');
+            set({ countdownValue: null, raceStarted: true });
+            clearInterval(countdownInterval);
+          }
+        }, 1000);
+      },
+
+      setRaceStarted: (raceStarted) => set({ raceStarted }),
+      setRaceFinished: (raceFinished) => set({ raceFinished }),
+
+      updateCarPosition: (carId, position, rotation, lapProgress) =>
+        set((state) => {
+          const carPositions = [...state.carPositions];
+          const carIndex = carPositions.findIndex((c) => c.id === carId);
+
+          if (carIndex !== -1) {
+            carPositions[carIndex] = {
+              ...carPositions[carIndex],
+              position,
+              rotation,
+              lapProgress,
+            };
+          } else {
+            carPositions.push({
+              id: carId,
+              name: carId,
+              position,
+              rotation,
+              finishTime: null,
+              lapProgress,
+            });
+          }
+
+          return { carPositions };
+        }),
+
+      setCarFinished: (carId, finishTime) =>
+        set((state) => {
+          const carPositions = state.carPositions.map((car) =>
+            car.id === carId ? { ...car, finishTime } : car
+          );
+          return { carPositions };
+        }),
+
+      initializeRace: () =>
+        set({
+          countdownValue: 3,
+          raceStarted: false,
+          raceFinished: false,
+          carPositions: [
+            { id: 'player', name: 'You', position: { x: 283, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-1', name: 'Racer 1', position: { x: 290, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-2', name: 'Racer 2', position: { x: 283, y: 10, z: 450 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-3', name: 'Racer 3', position: { x: 290, y: 10, z: 450 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-4', name: 'Racer 4', position: { x: 283, y: 10, z: 442 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-5', name: 'Racer 5', position: { x: 290, y: 10, z: 442 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-6', name: 'Racer 6', position: { x: 296, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
+          ],
+        }),
+
+      resetRace: () =>
+        set({
+          countdownValue: 3,
+          raceStarted: false,
+          raceFinished: false,
+          carPositions: [],
+          position: { x: 283, y: 10, z: 458 },
+          rotation: 0,
+          velocity: { x: 0, y: 0, z: 0 },
+        }),
 
       // Utility getters
       canMove: () => {
