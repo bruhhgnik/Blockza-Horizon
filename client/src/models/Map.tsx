@@ -104,7 +104,7 @@ type GLTFResult = GLTF & {
     sjfy_06_1: THREE.MeshBasicMaterial
     xrht_yu_01: THREE.MeshBasicMaterial
   }
-  animations: GLTFAction[]
+  animations: THREE.AnimationClip[]
 }
 
 export function Model(props: JSX.IntrinsicElements['group']) {

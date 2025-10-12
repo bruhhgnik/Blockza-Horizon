@@ -38,7 +38,8 @@ export function Model(props: JSX.IntrinsicElements['group']) {
 
     // If there's a texture map, configure it
     if (mat.map) {
-      mat.map.encoding = THREE.sRGBEncoding;
+      // @ts-ignore - Three.js version compatibility
+      mat.map.colorSpace = 'srgb';
       mat.map.needsUpdate = true;
     }
 

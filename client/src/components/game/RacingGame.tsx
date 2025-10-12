@@ -3,9 +3,13 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import * as THREE from 'three';
 import { Model as Car2Model } from '../../models/Car2';
+// @ts-ignore - JSX models without type definitions
 import { Model as Car3Model } from '../../models/Car3';
+// @ts-ignore - JSX models without type definitions
 import { Model as Car4Model } from '../../models/Car4';
+// @ts-ignore - JSX models without type definitions
 import { Model as Car5Model } from '../../models/Car5';
+// @ts-ignore - JSX models without type definitions
 import { Model as Car6Model } from '../../models/Car6';
 import { Model as MapModel } from '../../models/Map';
 import FloorGrid from './FloorGrid';

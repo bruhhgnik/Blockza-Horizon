@@ -4,7 +4,7 @@ import { usePlayerMovement } from "../dojo/hooks/usePlayerMovement";
 import useAppStore from "../zustand/store";
 import { MainMenu } from "../components/ui/MainMenu";
 import { RacingGame } from "../components/game/RacingGame";
-import BlockroomsCard from "../components/ui/BlockroomsCard";
+import { RacingHUD } from "../components/ui/RacingHUD";
 import { CountdownOverlay } from "../components/ui/CountdownOverlay";
 import { Leaderboard } from "../components/ui/Leaderboard";
 
@@ -24,8 +24,8 @@ const App = () => {
       {/* Show main menu if game hasn't started */}
       {!gameStarted && <MainMenu />}
 
-      {/* Show BlockroomsCard in the corner */}
-      {gameStarted && <BlockroomsCard />}
+      {/* Racing HUD - Speedometer, Position, Time, etc. */}
+      {gameStarted && <RacingHUD />}
 
       {/* Countdown overlay */}
       {gameStarted && <CountdownOverlay />}
