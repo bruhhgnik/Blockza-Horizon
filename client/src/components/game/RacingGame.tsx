@@ -22,6 +22,7 @@ export const CarController = () => {
     updatePosition,
     updateRotation,
     raceStarted,
+    countdownValue,
     initializeRace,
     startRaceCountdown,
     updateCarPosition,
@@ -50,6 +51,24 @@ export const CarController = () => {
       }, 500);
     }
   }, [initializeRace, startRaceCountdown]);
+
+  // Reset car physics when new race starts (countdownValue = 3)
+  useEffect(() => {
+    if (countdownValue === 3) {
+      console.log('🔄 Resetting player car physics for new race');
+      velocityRef.current.set(0, 0, 0);
+      angularVelocityRef.current = 0;
+      positionRef.current.set(position.x, position.y, position.z);
+      rotationRef.current = 0;
+      cameraPosRef.current.set(0, 0, 0); // Reset camera
+
+      // Reset car visual position
+      if (carRef.current) {
+        carRef.current.position.set(position.x, position.y, position.z);
+        carRef.current.rotation.y = 0;
+      }
+    }
+  }, [countdownValue, position]);
 
   // Keyboard event handlers
   useEffect(() => {

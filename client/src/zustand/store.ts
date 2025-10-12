@@ -739,16 +739,18 @@ const useAppStore = create<AppStore>()(
         });
       },
 
-      resetRace: () =>
+      resetRace: () => {
+        console.log('🔄 Resetting race - clearing all data');
         set({
           countdownValue: 3,
           raceStarted: false,
           raceFinished: false,
-          carPositions: [],
+          carPositions: [], // This will be repopulated by initializeRace
           position: { x: 283, y: 10, z: 458 },
           rotation: 0,
           velocity: { x: 0, y: 0, z: 0 },
-        }),
+        });
+      },
 
       // Utility getters
       canMove: () => {

@@ -1,0 +1,13 @@
+[world]
+name = "blockrooms"
+description = ""
+seed = "blockrooms11"
+
+[namespace]
+default = "blockrooms"
+
+[env]
+rpc_url = "https://starknet-sepolia.public.blastapi.io/rpc/v0_8"
+
+[writers]
+"blockrooms" = ["blockrooms-actions"] 

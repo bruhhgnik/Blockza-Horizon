@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import useAppStore from '../../zustand/store';
 
 export const Leaderboard: React.FC = () => {
-  const { carPositions, raceStarted } = useAppStore();
+  const { carPositions, raceStarted, raceFinished, resetRace, initializeRace, startRaceCountdown } = useAppStore();
 
   // Sort cars by finish time (finished cars first, then by time)
   const sortedCars = useMemo(() => {
@@ -20,14 +20,24 @@ export const Leaderboard: React.FC = () => {
     });
   }, [carPositions]);
 
-  // Check if any car has finished
-  const anyCarFinished = carPositions.some((car) => car.finishTime !== null);
+  // Only show leaderboard when race is finished (player completed lap)
+  if (!raceStarted || !raceFinished) return null;
 
-  // Don't show leaderboard if race hasn't started or no car has finished yet
-  if (!raceStarted || !anyCarFinished) return null;
+  // Find player's finish time and position
+  const playerCar = carPositions.find(car => car.id === 'player');
+  const finishedCars = carPositions.filter(car => car.finishTime !== null);
+  const playerPosition = playerCar?.finishTime
+    ? finishedCars.findIndex(car => car.id === 'player') + 1
+    : null;
 
-  // Check if all cars finished
-  const allCarsFinished = carPositions.every((car) => car.finishTime !== null);
+  const handleNewGame = () => {
+    console.log('🔄 Starting new game...');
+    resetRace();
+    initializeRace();
+    setTimeout(() => {
+      startRaceCountdown();
+    }, 500);
+  };
 
   return (
     <div
@@ -36,30 +46,112 @@ export const Leaderboard: React.FC = () => {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        background: 'rgba(0, 0, 0, 0.9)',
-        border: '3px solid #ffd700',
-        borderRadius: '15px',
-        padding: '30px',
-        minWidth: '400px',
+        background: 'linear-gradient(135deg, rgba(20, 20, 30, 0.98) 0%, rgba(10, 10, 20, 0.98) 100%)',
+        border: '4px solid rgba(255, 215, 0, 0.8)',
+        borderRadius: '0',
+        padding: '0',
+        width: '600px',
+        maxWidth: '90vw',
         zIndex: 999,
         color: 'white',
-        fontFamily: 'Arial, sans-serif',
-        boxShadow: '0 0 30px rgba(255, 215, 0, 0.5)',
+        fontFamily: '"Pricedown", "Impact", "Arial Black", sans-serif',
+        boxShadow: '0 0 60px rgba(255, 215, 0, 0.4), inset 0 0 100px rgba(0, 0, 0, 0.5)',
+        overflow: 'hidden',
       }}
     >
-      <h2
+      {/* Scan lines effect */}
+      <div
         style={{
-          textAlign: 'center',
-          fontSize: '32px',
-          marginBottom: '20px',
-          color: '#ffd700',
-          textShadow: '0 0 10px rgba(255, 215, 0, 0.8)',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.03) 2px, rgba(255, 255, 255, 0.03) 4px)',
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+      />
+
+      {/* Top bar */}
+      <div
+        style={{
+          background: 'linear-gradient(to right, rgba(255, 215, 0, 0.9), rgba(255, 165, 0, 0.9))',
+          padding: '15px 30px',
+          position: 'relative',
+          zIndex: 2,
         }}
       >
-        {allCarsFinished ? 'RACE COMPLETE!' : 'LEADERBOARD'}
-      </h2>
+        <h2
+          style={{
+            margin: 0,
+            fontSize: '42px',
+            fontWeight: 900,
+            letterSpacing: '3px',
+            textTransform: 'uppercase',
+            color: '#000000',
+            textShadow: '2px 2px 0px rgba(0, 0, 0, 0.3)',
+            textAlign: 'center',
+          }}
+        >
+          RACE COMPLETE
+        </h2>
+      </div>
 
-      <div style={{ marginTop: '20px' }}>
+      {/* Player stats section */}
+      {playerCar?.finishTime && (
+        <div
+          style={{
+            background: 'rgba(0, 0, 0, 0.6)',
+            padding: '25px 30px',
+            borderBottom: '2px solid rgba(255, 215, 0, 0.3)',
+            position: 'relative',
+            zIndex: 2,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', color: '#999', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '5px' }}>
+                Your Time
+              </div>
+              <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#00ff00', textShadow: '0 0 20px rgba(0, 255, 0, 0.5)' }}>
+                {(playerCar.finishTime / 1000).toFixed(2)}s
+              </div>
+            </div>
+            {playerPosition && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '14px', color: '#999', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '5px' }}>
+                  Position
+                </div>
+                <div style={{
+                  fontSize: '64px',
+                  fontWeight: 'bold',
+                  color: playerPosition === 1 ? '#ffd700' : playerPosition === 2 ? '#c0c0c0' : playerPosition === 3 ? '#cd7f32' : '#ffffff',
+                  textShadow: `0 0 20px ${playerPosition === 1 ? 'rgba(255, 215, 0, 0.8)' : 'rgba(255, 255, 255, 0.3)'}`,
+                  lineHeight: 1,
+                }}>
+                  #{playerPosition}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard section */}
+      <div style={{ padding: '20px 30px', position: 'relative', zIndex: 2 }}>
+        <div style={{
+          fontSize: '16px',
+          color: '#ffd700',
+          textTransform: 'uppercase',
+          letterSpacing: '3px',
+          marginBottom: '15px',
+          fontWeight: 'bold',
+          borderBottom: '2px solid rgba(255, 215, 0, 0.3)',
+          paddingBottom: '10px',
+        }}>
+          FINAL STANDINGS
+        </div>
         {sortedCars.map((car, index) => {
           const isFinished = car.finishTime !== null;
           const position = isFinished
@@ -73,27 +165,28 @@ export const Leaderboard: React.FC = () => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '12px 15px',
-                marginBottom: '10px',
+                padding: '15px 20px',
+                marginBottom: '8px',
                 background:
                   position === 1
-                    ? 'rgba(255, 215, 0, 0.2)'
+                    ? 'linear-gradient(90deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.1) 100%)'
                     : position === 2
-                    ? 'rgba(192, 192, 192, 0.2)'
+                    ? 'linear-gradient(90deg, rgba(192, 192, 192, 0.3) 0%, rgba(192, 192, 192, 0.1) 100%)'
                     : position === 3
-                    ? 'rgba(205, 127, 50, 0.2)'
-                    : 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                border: car.id === 'player' ? '2px solid #00ff00' : '1px solid rgba(255, 255, 255, 0.2)',
+                    ? 'linear-gradient(90deg, rgba(205, 127, 50, 0.3) 0%, rgba(205, 127, 50, 0.1) 100%)'
+                    : 'linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                borderLeft: car.id === 'player' ? '4px solid #00ff00' : 'none',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.2s ease',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 {isFinished && (
                   <span
                     style={{
-                      fontSize: '24px',
-                      fontWeight: 'bold',
-                      minWidth: '30px',
+                      fontSize: '32px',
+                      fontWeight: 900,
+                      minWidth: '50px',
                       color:
                         position === 1
                           ? '#ffd700'
@@ -101,18 +194,20 @@ export const Leaderboard: React.FC = () => {
                           ? '#c0c0c0'
                           : position === 3
                           ? '#cd7f32'
-                          : '#ffffff',
+                          : '#666666',
+                      textShadow: position && position <= 3 ? '0 0 10px currentColor' : 'none',
                     }}
                   >
-                    {position}.
+                    {position}
                   </span>
                 )}
                 {!isFinished && (
                   <span
                     style={{
-                      fontSize: '18px',
-                      minWidth: '30px',
-                      color: '#888888',
+                      fontSize: '32px',
+                      minWidth: '50px',
+                      color: '#333333',
+                      fontWeight: 900,
                     }}
                   >
                     -
@@ -120,8 +215,11 @@ export const Leaderboard: React.FC = () => {
                 )}
                 <span
                   style={{
-                    fontSize: '18px',
-                    fontWeight: car.id === 'player' ? 'bold' : 'normal',
+                    fontSize: '20px',
+                    fontWeight: car.id === 'player' ? 900 : 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    color: car.id === 'player' ? '#00ff00' : '#ffffff',
                   }}
                 >
                   {car.name}
@@ -130,31 +228,62 @@ export const Leaderboard: React.FC = () => {
 
               <span
                 style={{
-                  fontSize: '16px',
-                  color: isFinished ? '#00ff00' : '#888888',
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  color: isFinished ? '#ffffff' : '#555555',
+                  fontFamily: 'monospace',
                 }}
               >
                 {isFinished
                   ? `${(car.finishTime! / 1000).toFixed(2)}s`
-                  : 'Racing...'}
+                  : 'DNF'}
               </span>
             </div>
           );
         })}
       </div>
 
-      {allCarsFinished && (
-        <div
+      {/* Bottom button section */}
+      <div style={{ padding: '20px 30px', background: 'rgba(0, 0, 0, 0.8)', position: 'relative', zIndex: 2 }}>
+        <button
+          onClick={handleNewGame}
           style={{
-            marginTop: '25px',
-            textAlign: 'center',
-            fontSize: '14px',
-            color: '#888888',
+            width: '100%',
+            padding: '18px',
+            fontSize: '24px',
+            fontWeight: 900,
+            color: '#000000',
+            background: 'linear-gradient(to bottom, #ffd700, #ffa500)',
+            border: 'none',
+            borderRadius: '0',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+            letterSpacing: '3px',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 6px 0px #885500, 0 8px 20px rgba(0, 0, 0, 0.5)',
+            position: 'relative',
+            fontFamily: 'inherit',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(2px)';
+            e.currentTarget.style.boxShadow = '0 4px 0px #885500, 0 6px 15px rgba(0, 0, 0, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 6px 0px #885500, 0 8px 20px rgba(0, 0, 0, 0.5)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(4px)';
+            e.currentTarget.style.boxShadow = '0 2px 0px #885500, 0 4px 10px rgba(0, 0, 0, 0.5)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = 'translateY(2px)';
+            e.currentTarget.style.boxShadow = '0 4px 0px #885500, 0 6px 15px rgba(0, 0, 0, 0.5)';
           }}
         >
-          Press ESC to return to menu
-        </div>
-      )}
+          ▶ NEW RACE
+        </button>
+      </div>
     </div>
   );
 };

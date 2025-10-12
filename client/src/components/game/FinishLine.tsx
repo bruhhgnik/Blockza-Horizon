@@ -5,21 +5,32 @@ import useAppStore from '../../zustand/store';
 
 // Finish line component
 export const FinishLine = () => {
-  const { carPositions, setCarFinished, raceStarted } = useAppStore();
-  const crossedCarsRef = useRef<Set<string>>(new Set());
+  const { carPositions, setCarFinished, setRaceFinished, raceStarted, countdownValue } = useAppStore();
+  const movedAwayCarsRef = useRef<Set<string>>(new Set()); // Cars that have moved away from start
   const startTimeRef = useRef<number | null>(null);
 
   // Finish line position and dimensions
-  const finishLineZ = 458; // Same as starting Z position
-  const finishLineX = 283; // Center X
-  const finishLineWidth = 30; // Width of finish line detection zone
-  const finishLineThickness = 2; // Thickness in Z direction
+  const finishLineZ = 460; // Finish line Z position
+  const finishLineMinX = 282; // Left edge of finish line
+  const finishLineMaxX = 300; // Right edge of finish line
+  const finishLineWidth = finishLineMaxX - finishLineMinX; // 18 units wide
+  const finishLineCenterX = (finishLineMinX + finishLineMaxX) / 2; // Center at 291
+  const finishLineThickness = 3; // Thickness in Z direction
 
   useEffect(() => {
     if (raceStarted && startTimeRef.current === null) {
       startTimeRef.current = Date.now();
     }
   }, [raceStarted]);
+
+  // Reset tracking when new race starts
+  useEffect(() => {
+    if (countdownValue === 3) {
+      console.log('🔄 Resetting finish line tracking for new race');
+      movedAwayCarsRef.current.clear();
+      startTimeRef.current = null;
+    }
+  }, [countdownValue]);
 
   useFrame(() => {
     if (!raceStarted || startTimeRef.current === null) return;
@@ -32,35 +43,39 @@ export const FinishLine = () => {
       const carZ = car.position.z;
       const carX = car.position.x;
 
-      // Check if car crossed finish line
-      const withinXBounds = Math.abs(carX - finishLineX) < finishLineWidth / 2;
-      const crossedZLine =
-        Math.abs(carZ - finishLineZ) < finishLineThickness &&
-        !crossedCarsRef.current.has(car.id);
-
-      // Car must have moved away from start first (to prevent immediate finish)
-      const hasMovedAway = Math.abs(carZ - finishLineZ) > 10;
-
-      if (hasMovedAway) {
-        crossedCarsRef.current.add(car.id);
+      // Mark car as moved away if it's far enough from start
+      const hasMovedAway = Math.abs(carZ - finishLineZ) > 50; // Moved at least 50 units from start
+      if (hasMovedAway && !movedAwayCarsRef.current.has(car.id)) {
+        movedAwayCarsRef.current.add(car.id);
+        console.log(`${car.name} has moved away from start`);
       }
 
-      // Check if car returned to finish line after moving away
+      // Check if car is crossing the finish line
+      const withinXBounds = carX >= finishLineMinX && carX <= finishLineMaxX;
+      const atFinishLine = Math.abs(carZ - finishLineZ) < finishLineThickness;
+
+      // Car finishes if: within bounds, at finish line, and has moved away before
       if (
         withinXBounds &&
-        crossedZLine &&
-        crossedCarsRef.current.has(car.id) &&
-        crossedCarsRef.current.size > 1
+        atFinishLine &&
+        movedAwayCarsRef.current.has(car.id) &&
+        startTimeRef.current !== null
       ) {
         const finishTime = Date.now() - startTimeRef.current;
         setCarFinished(car.id, finishTime);
-        console.log(`${car.name} finished in ${(finishTime / 1000).toFixed(2)}s`);
+        console.log(`🏁 ${car.name} finished in ${(finishTime / 1000).toFixed(2)}s`);
+
+        // If player finished, end the race
+        if (car.id === 'player') {
+          console.log('🎉 Player finished the race!');
+          setRaceFinished(true);
+        }
       }
     });
   });
 
   return (
-    <group position={[finishLineX, 0.5, finishLineZ]}>
+    <group position={[finishLineCenterX, 0.5, finishLineZ]}>
       {/* Visual finish line - checkered pattern */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[finishLineWidth, finishLineThickness]} />
@@ -72,12 +87,12 @@ export const FinishLine = () => {
         />
       </mesh>
 
-      {/* Checkered squares */}
-      {Array.from({ length: 10 }).map((_, i) => (
+      {/* Checkered squares - 6 squares across the finish line */}
+      {Array.from({ length: 6 }).map((_, i) => (
         <mesh
           key={i}
           position={[
-            (i - 4.5) * 3,
+            (i - 2.5) * 3,
             0.01,
             ((i % 2) - 0.5) * finishLineThickness,
           ]}

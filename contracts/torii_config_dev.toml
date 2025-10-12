@@ -1,0 +1,21 @@
+# The world address to index
+world_address = "0x057eb357d996ef85611fdd58fd47cbaec596c9d7464651acb712bdfa321b4561"
+
+# Default RPC URL configuration
+rpc = "http://localhost:5050/"
+
+# Indexing Options
+[indexing]
+allowed_origins = ["*"]
+transactions = true
+pending = true
+polling_interval = 1000
+contracts = []
+
+[events]
+raw = true
+
+[sql]
+historical = [ 
+    "blockrooms-PlayerState", 
+]

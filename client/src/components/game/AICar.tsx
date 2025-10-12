@@ -16,7 +16,7 @@ interface AICarProps {
 
 export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, driverName }: AICarProps) => {
   const { scene } = useThree();
-  const { raceStarted, updateCarPosition } = useAppStore();
+  const { raceStarted, countdownValue, updateCarPosition } = useAppStore();
 
   const carRef = useRef<THREE.Group>(null);
   const velocityRef = useRef(new Vector3(0, 0, 0));
@@ -50,6 +50,28 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carId]);
+
+  // Reset AI car when new race starts (countdownValue = 3)
+  useEffect(() => {
+    if (countdownValue === 3) {
+      console.log(`🔄 Resetting ${driverName} for new race`);
+      velocityRef.current.set(0, 0, 0);
+      angularVelocityRef.current = 0;
+      positionRef.current.set(startPosition.x, startPosition.y, startPosition.z);
+      rotationRef.current = 0;
+      hasStartedRef.current = false;
+
+      // Reset car visual position
+      if (carRef.current) {
+        carRef.current.position.set(startPosition.x, startPosition.y, startPosition.z);
+        carRef.current.rotation.y = 0;
+      }
+
+      // Randomize AI parameters for variety in each race
+      targetLateralOffset.current = (Math.random() - 0.5) * 12;
+      aggressiveness.current = 0.93 + Math.random() * 0.07;
+    }
+  }, [countdownValue, startPosition, driverName]);
 
   useFrame(() => {
     if (!carRef.current) return;

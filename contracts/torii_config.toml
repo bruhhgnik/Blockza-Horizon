@@ -1,0 +1,21 @@
+# The world address to index
+world_address = "0x06eec5002d554dae100cdc846a7dfee48bab680f78b7463658da7ed241e2f2a9"
+
+# Default RPC URL configuration
+rpc = "https://api.cartridge.gg/x/starknet/sepolia"
+
+# Indexing Options
+[indexing]
+allowed_origins = ["*"]
+transactions = true
+pending = true
+polling_interval = 1000
+contracts = []
+
+[events]
+raw = true
+
+[sql]
+historical = [ 
+    "blockrooms-PlayerState", 
+]
