@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import * as THREE from 'three';
-import { Model as CarModel } from '../../models/Car2';
+import { Text } from '@react-three/drei';
 import useAppStore from '../../zustand/store';
 import { updateCarPhysics, CAR_PHYSICS } from './carPhysics';
 
@@ -10,9 +10,11 @@ interface AICarProps {
   carId: string;
   startPosition: { x: number; y: number; z: number };
   color?: string;
+  CarModel: React.ComponentType<any>;
+  driverName: string; // Driver name to display
 }
 
-export const AICar = ({ carId, startPosition, color = '#ff0000' }: AICarProps) => {
+export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, driverName }: AICarProps) => {
   const { scene } = useThree();
   const { raceStarted, updateCarPosition } = useAppStore();
 
@@ -30,7 +32,7 @@ export const AICar = ({ carId, startPosition, color = '#ff0000' }: AICarProps) =
   const hasStartedRef = useRef(false);
 
   useEffect(() => {
-    console.log(`🏁 AI Car ${carId} mounted at position:`, startPosition, 'color:', color, 'racingLineOffset:', racingLineOffset.current);
+    console.log(`🏁 ${driverName} (${carId}) mounted at position:`, startPosition, 'racingLineOffset:', racingLineOffset.current);
 
     // Initialize position ONCE on mount
     positionRef.current.set(startPosition.x, startPosition.y, startPosition.z);
@@ -40,7 +42,7 @@ export const AICar = ({ carId, startPosition, color = '#ff0000' }: AICarProps) =
     hasStartedRef.current = false;
 
     return () => {
-      console.log(`🏁 AI Car ${carId} unmounted`);
+      console.log(`🏁 ${driverName} unmounted`);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carId]); // Only reset on mount/unmount, NOT when startPosition object reference changes
@@ -51,7 +53,7 @@ export const AICar = ({ carId, startPosition, color = '#ff0000' }: AICarProps) =
     // Mark race as started
     if (!hasStartedRef.current && raceStarted) {
       hasStartedRef.current = true;
-      console.log(`✅ AI Car ${carId} RACE STARTED!`);
+      console.log(`✅ ${driverName} RACE STARTED!`);
     }
 
     // Only move if race has started
@@ -138,13 +140,22 @@ export const AICar = ({ carId, startPosition, color = '#ff0000' }: AICarProps) =
 
   return (
     <group ref={carRef} position={[startPosition.x, startPosition.y, startPosition.z]}>
-      <CarModel scale={0.17} />
-      {/* Debug marker - visible colored sphere above car */}
-      <mesh position={[0, 10, 0]}>
-        <sphereGeometry args={[1.5, 16, 16]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.0} />
-      </mesh>
-      <pointLight position={[0, 5, 0]} intensity={1.0} distance={50} color={color} />
+      <CarModel scale={1.5} />
+      {/* Driver name text above car - always faces camera */}
+      <Text
+        position={[0, 12, 0]}
+        fontSize={0.6}
+        color={color}
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.1}
+        outlineColor="#000000"
+        fillOpacity={1}
+        outlineOpacity={1}
+      >
+        {driverName}
+      </Text>
+      <pointLight position={[0, 6, 0]} intensity={1.0} distance={50} color={color} />
     </group>
   );
 };

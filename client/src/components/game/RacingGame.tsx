@@ -1,8 +1,12 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import * as THREE from 'three';
-import { Model as CarModel } from '../../models/Car2';
+import { Model as Car2Model } from '../../models/Car2';
+import { Model as Car3Model } from '../../models/Car3';
+import { Model as Car4Model } from '../../models/Car4';
+import { Model as Car5Model } from '../../models/Car5';
+import { Model as Car6Model } from '../../models/Car6';
 import { Model as MapModel } from '../../models/Map';
 import FloorGrid from './FloorGrid';
 import useAppStore from '../../zustand/store';
@@ -208,7 +212,7 @@ export const CarController = () => {
 
   return (
     <group ref={carRef} position={[position.x, position.y, position.z]}>
-      <CarModel scale={0.17} />
+      <Car2Model scale={0.17} />
       {/* Add a simple light to the car */}
       <pointLight position={[0, 5, 0]} intensity={1} distance={50} />
     </group>
@@ -217,15 +221,15 @@ export const CarController = () => {
 
 // Main racing game scene
 export const RacingGame = () => {
-  // AI car starting positions (2 cars per row, 3 rows)
-  const aiCarPositions = [
-    { id: 'ai-1', x: 290, y: 10, z: 458, color: '#ff0000' },  // Row 1, Right - Red
-    { id: 'ai-2', x: 276, y: 10, z: 458, color: '#00ff00' },  // Row 1, Left - Green
-    { id: 'ai-3', x: 290, y: 10, z: 450, color: '#0000ff' },  // Row 2, Right - Blue
-    { id: 'ai-4', x: 276, y: 10, z: 450, color: '#ffff00' },  // Row 2, Left - Yellow
-    { id: 'ai-5', x: 290, y: 10, z: 442, color: '#ff00ff' },  // Row 3, Right - Magenta
-    { id: 'ai-6', x: 276, y: 10, z: 442, color: '#00ffff' },  // Row 3, Left - Cyan
-  ];
+  // Stable AI car configurations (names don't change)
+  const aiCarPositions = useMemo(() => [
+    { id: 'ai-1', x: 290, y: 10, z: 458, color: '#ff0000', model: Car3Model, name: 'Max Thunder' },   // Row 1, Right - Red - Car3
+    { id: 'ai-2', x: 276, y: 10, z: 458, color: '#00ff00', model: Car4Model, name: 'Luna Speed' },    // Row 1, Left - Green - Car4
+    { id: 'ai-3', x: 290, y: 10, z: 450, color: '#0000ff', model: Car5Model, name: 'Turbo Smith' },   // Row 2, Right - Blue - Car5
+    { id: 'ai-4', x: 276, y: 10, z: 450, color: '#ffff00', model: Car6Model, name: 'Blaze Cruz' },    // Row 2, Left - Yellow - Car6
+    { id: 'ai-5', x: 290, y: 10, z: 442, color: '#ff00ff', model: Car3Model, name: 'Nitro Nova' },    // Row 3, Right - Magenta - Car3
+    { id: 'ai-6', x: 276, y: 10, z: 442, color: '#00ffff', model: Car4Model, name: 'Storm Racer' },   // Row 3, Left - Cyan - Car4
+  ], []); // Empty dependency array means this only runs once
 
   return (
     <>
@@ -254,6 +258,8 @@ export const RacingGame = () => {
           carId={pos.id}
           startPosition={{ x: pos.x, y: pos.y, z: pos.z }}
           color={pos.color}
+          CarModel={pos.model}
+          driverName={pos.name}
         />
       ))}
     </>

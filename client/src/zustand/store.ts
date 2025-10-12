@@ -717,21 +717,27 @@ const useAppStore = create<AppStore>()(
           return { carPositions };
         }),
 
-      initializeRace: () =>
+      initializeRace: () => {
+        // Use consistent racing names (not shuffled, to keep them stable)
+        const racingNames = [
+          'Max Thunder', 'Luna Speed', 'Turbo Smith', 'Blaze Cruz', 'Nitro Nova', 'Storm Racer'
+        ];
+
         set({
           countdownValue: 3,
           raceStarted: false,
           raceFinished: false,
           carPositions: [
             { id: 'player', name: 'You', position: { x: 283, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-1', name: 'Racer 1', position: { x: 290, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-2', name: 'Racer 2', position: { x: 283, y: 10, z: 450 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-3', name: 'Racer 3', position: { x: 290, y: 10, z: 450 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-4', name: 'Racer 4', position: { x: 283, y: 10, z: 442 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-5', name: 'Racer 5', position: { x: 290, y: 10, z: 442 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-6', name: 'Racer 6', position: { x: 296, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-1', name: racingNames[0], position: { x: 290, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-2', name: racingNames[1], position: { x: 276, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-3', name: racingNames[2], position: { x: 290, y: 10, z: 450 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-4', name: racingNames[3], position: { x: 276, y: 10, z: 450 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-5', name: racingNames[4], position: { x: 290, y: 10, z: 442 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'ai-6', name: racingNames[5], position: { x: 276, y: 10, z: 442 }, rotation: 0, finishTime: null, lapProgress: 0 },
           ],
-        }),
+        });
+      },
 
       resetRace: () =>
         set({
