@@ -249,58 +249,65 @@ const pollRefetchUntilInactive = async (
 const handlePlayForFree = async (): Promise<void> => {
   await ensureBgm();
 
-  // Step 1: Connect wallet if not connected
-  if (!isConnected) {
-    await handleConnect();
-    await new Promise((r) => setTimeout(r, 1500));
-    await refetch();
-    return; // Let user click again after connecting
-  }
-
-  // Step 2: Initialize player if needed
-  if (!hasPlayerStats && canInitialize) {
-    const res = await initializePlayer();
-    if (res?.success) {
-      await new Promise((r) => setTimeout(r, 2000));
+  // ALL-IN-ONE: Handle everything automatically without requiring multiple clicks
+  try {
+    // Step 1: Connect wallet if not connected
+    if (!isConnected) {
+      await handleConnect();
+      await new Promise((r) => setTimeout(r, 1500));
       await refetch();
+      // Continue to next step automatically
     }
-    return; // Let user click again after initializing
+
+    // Step 2: Initialize player if needed
+    if (!hasPlayerStats && canInitialize) {
+      const res = await initializePlayer();
+      if (res?.success) {
+        await new Promise((r) => setTimeout(r, 2000));
+        await refetch();
+      }
+      // Continue to next step automatically
+    }
+
+    // Step 3: Enter the game (with session cleanup if needed)
+    stopBgmWithFade(700);
+
+    // If a previous session is still active, end it first
+    if (gameAlreadyActive && canEndGame) {
+      try {
+        await endGame();
+      } catch {
+        // ignore; proceed to refresh and start
+      }
+
+      // HARD REFRESH OF FRONTEND STATE
+      try {
+        await pollRefetchUntilInactive(refetch, 12, 350);
+      } catch {
+        // even if polling fails, still move on
+      }
+    }
+
+    // Start a fresh session if allowed
+    if (canStartGame) {
+      try {
+        await startGame();
+        // One extra refetch burst
+        await refetch();
+        await new Promise((r) => setTimeout(r, 250));
+        await refetch();
+      } catch {
+        // swallow; UI flow continues
+      }
+    }
+
+    // Start tutorial sequence: black screen -> video -> game
+    setShowBlackScreen(true);
+  } catch (error) {
+    console.error('Error in play flow:', error);
+    // Still try to start the game even if something failed
+    setShowBlackScreen(true);
   }
-
-  // Step 3: Enter the game (with session cleanup if needed)
-  stopBgmWithFade(700);
-
-  // If a previous session is still active, end it first (backend "Press B")
-  if (gameAlreadyActive && canEndGame) {
-    try {
-      await endGame();
-    } catch {
-      // ignore; proceed to refresh and start
-    }
-
-    // HARD REFRESH OF FRONTEND STATE: refetch until store no longer marks session active
-    try {
-      await pollRefetchUntilInactive(refetch, 12, 350);
-    } catch {
-      // even if polling fails, still move on
-    }
-  }
-
-  // Start a fresh session if allowed
-  if (canStartGame) {
-    try {
-      await startGame();
-      // One extra refetch burst so HUD shows brand-new session values immediately
-      await refetch();
-      await new Promise((r) => setTimeout(r, 250));
-      await refetch();
-    } catch {
-      // swallow; UI flow continues
-    }
-  }
-
-  // Start tutorial sequence: black screen -> video -> game
-  setShowBlackScreen(true);
 };
 
 
@@ -312,77 +319,88 @@ const handlePlayForFree = async (): Promise<void> => {
       style={{
         position: "fixed",
         inset: 0,
-        backgroundImage: `url(${images[bg]})`,
-        backgroundSize: "cover",
-               backgroundPosition: "right center",
-
+        overflow: "hidden",
       }}
     >
- 
-          <div
+      {/* Video background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
         style={{
-          position: "relative",
+          position: "absolute",
+          inset: 0,
+          width: "100%",
           height: "100%",
-          display: "flex",
-          alignItems: "stretch",
-          justifyContent: "flex-start",
+          objectFit: "cover",
+          zIndex: 0,
         }}
       >
-        {/* left dark fade panel only (no full overlay) */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(90deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.75) 18%, rgba(0,0,0,0.55) 32%, rgba(0,0,0,0.0) 55%)",
-            pointerEvents: "none",
-          }}
-        />
+        <source src="/menu.mp4" type="video/mp4" />
+      </video>
 
-        {/* left menu column */}
-        <div
+      {/* Dark overlay for better button visibility */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "radial-gradient(circle at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)",
+          zIndex: 1,
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Centered content */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 2,
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* PLAY FOR FREE button - centered and enlarged */}
+        <button
+          onClick={handlePlayForFree}
+          disabled={isLoading}
           style={{
-            position: "relative",
-            zIndex: 1,
-            width: 920,
-            padding: "396px 260px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 18,
-            color: "white",
-            userSelect: "none",
+            all: "unset",
+            cursor: isLoading ? "not-allowed" : "pointer",
+            transform: "scale(1)",
+            transition: "transform 0.2s ease, box-shadow 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            if (!isLoading) {
+              e.currentTarget.style.transform = "scale(1.05)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
           }}
         >
-          
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {/* PLAY FOR FREE — handles everything */}
-            <button
-              onClick={handlePlayForFree}
-              disabled={isLoading}
-              style={{
-                all: "unset",
-                cursor: isLoading ? "not-allowed" : "pointer",
-                fontSize: 18,
-                letterSpacing: 1,
-                padding: "2px 0",
-              }}
-            >
-              <span
-                style={{
-                  background: "#FFFFFF",
-                  color: "#000000",
-                  borderRadius: 8,
-                  padding: "8px 14px",
-                  boxShadow: "0 2px 0 rgba(0,0,0,0.35)",
-                  opacity: isLoading ? 0.6 : 1,
-                }}
-              >
-                {isLoading ? "LOADING..." : "PLAY FOR FREE"}
-              </span>
-            </button>
+          <div
+            style={{
+              background: "linear-gradient(to bottom, #ffffff, #f0f0f0)",
+              color: "#000000",
+              borderRadius: "16px",
+              padding: "32px 80px",
+              fontSize: "48px",
+              fontWeight: 900,
+              letterSpacing: "4px",
+              textTransform: "uppercase",
+              boxShadow: "0 8px 0 rgba(0,0,0,0.3), 0 12px 40px rgba(0,0,0,0.5)",
+              border: "4px solid #ffd700",
+              opacity: isLoading ? 0.7 : 1,
+              fontFamily: '"Impact", "Arial Black", sans-serif',
+              textAlign: "center",
+            }}
+          >
+            {isLoading ? "LOADING..." : "PLAY FOR FREE"}
           </div>
-        </div>
+        </button>
       </div>
 
       {showTutorial && (
