@@ -25,27 +25,31 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
   const rotationRef = useRef(0);
   const raycaster = useRef(new THREE.Raycaster());
 
-  // AI-specific racing line - each car gets unique variation
-  const racingLineOffset = useRef((Math.random() - 0.5) * 15); // Offset from center line (-7.5 to +7.5)
-  const aggressiveness = useRef(0.92 + Math.random() * 0.08); // 0.92-1.0 acceleration probability (accelerate 92-100% of time)
-  const steeringSmoothness = useRef(0.6 + Math.random() * 0.3); // 0.6-0.9 steering probability
+  // AI parameters for variation
+  const targetLateralOffset = useRef((Math.random() - 0.5) * 12); // Desired offset from center (-6 to +6)
+  const aggressiveness = useRef(0.93 + Math.random() * 0.07); // How often to accelerate (93-100%)
   const hasStartedRef = useRef(false);
 
   useEffect(() => {
-    console.log(`🏁 ${driverName} (${carId}) mounted at position:`, startPosition, 'racingLineOffset:', racingLineOffset.current);
+    console.log(`🏁 ${driverName} (${carId}) mounted - target lateral offset:`, targetLateralOffset.current);
 
     // Initialize position ONCE on mount
     positionRef.current.set(startPosition.x, startPosition.y, startPosition.z);
     velocityRef.current.set(0, 0, 0);
     angularVelocityRef.current = 0;
-    rotationRef.current = 0;
+    rotationRef.current = 0; // Face forward (negative Z direction)
     hasStartedRef.current = false;
+
+    // Set initial car rotation to face forward
+    if (carRef.current) {
+      carRef.current.rotation.y = 0;
+    }
 
     return () => {
       console.log(`🏁 ${driverName} unmounted`);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [carId]); // Only reset on mount/unmount, NOT when startPosition object reference changes
+  }, [carId]);
 
   useFrame(() => {
     if (!carRef.current) return;
@@ -58,31 +62,25 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
 
     // Only move if race has started
     if (raceStarted) {
+      // AI Logic: Simple strategy - always accelerate, steer to maintain racing line
+      const centerLineX = 283; // Track center X position
+      const desiredX = centerLineX + targetLateralOffset.current;
+      const currentOffsetFromDesired = positionRef.current.x - desiredX;
 
-      // Calculate desired racing line position
-      // For simplicity, AI tries to maintain its racing line offset from center (283)
-      const centerLineX = 283;
-      const desiredX = centerLineX + racingLineOffset.current;
-
-      // Calculate steering direction based on position relative to racing line
-      const offsetFromLine = positionRef.current.x - desiredX;
-
-      // Determine steering: positive offset means too far right, need to steer left
+      // Determine steering based on position relative to desired racing line
       let shouldSteerLeft = false;
       let shouldSteerRight = false;
 
-      if (Math.abs(offsetFromLine) > 2) { // Only steer if significantly off line
-        if (offsetFromLine > 0) {
+      // Steer to get back to racing line
+      if (Math.abs(currentOffsetFromDesired) > 1) {
+        if (currentOffsetFromDesired > 0) {
           shouldSteerLeft = true; // Too far right, steer left
         } else {
           shouldSteerRight = true; // Too far left, steer right
         }
       }
 
-      // Apply steering smoothness - don't steer every frame
-      const shouldSteer = Math.random() < steeringSmoothness.current;
-
-      // Apply unified physics with variable aggressiveness
+      // Apply physics with AI controls
       const shouldAccelerate = Math.random() < aggressiveness.current;
 
       const newState = updateCarPhysics(
@@ -93,10 +91,10 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
           rotation: rotationRef.current,
         },
         {
-          forward: shouldAccelerate, // AI accelerates based on aggressiveness
+          forward: shouldAccelerate,
           backward: false,
-          left: shouldSteer && shouldSteerLeft,
-          right: shouldSteer && shouldSteerRight,
+          left: shouldSteerLeft,
+          right: shouldSteerRight,
         }
       );
 
@@ -124,16 +122,20 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
 
       positionRef.current.y = terrainHeight + CAR_PHYSICS.carHeightOffset;
 
-      // Update car visual position
+      // Update car visual position and rotation
       carRef.current.position.copy(positionRef.current);
       carRef.current.rotation.y = rotationRef.current;
+
+      // Calculate lap progress (simple Z-based progress for now)
+      const startZ = 458;
+      const lapProgress = Math.max(0, (startZ - positionRef.current.z) / 1000); // Rough estimate
 
       // Update race state
       updateCarPosition(
         carId,
         { x: positionRef.current.x, y: positionRef.current.y, z: positionRef.current.z },
         rotationRef.current,
-        0 // lapProgress
+        lapProgress
       );
     }
   });
