@@ -144,7 +144,7 @@ export const usePlayerMovement = (): UsePlayerMovementReturn => {
     }
   }, [movePlayer, handleTransactionSuccess, handleTransactionFailure]);
 
-  
+
   useEffect(() => {
     if (isProcessingBoundary.current) return;
 
@@ -152,9 +152,9 @@ export const usePlayerMovement = (): UsePlayerMovementReturn => {
     const { crossed, deltaX, deltaY, contractDeltaX, contractDeltaY } = checkBoundaryCrossing(currentPos, lastVerifiedPosition.current);
 
     if (crossed) {
-      console.log('🎯 Boundary crossed detected!', { 
-        from: lastVerifiedPosition.current, 
-        to: currentPos, 
+      console.log('🎯 Boundary crossed detected!', {
+        from: lastVerifiedPosition.current,
+        to: currentPos,
         originalDelta: { deltaX, deltaY },
         contractDelta: { contractDeltaX, contractDeltaY }
       });

@@ -167,6 +167,9 @@ const pollRefetchUntilInactive = async (
     gamePhase,
     player,
     startGame: startGameUI,
+    resetRace,
+    initializeRace,
+    startRaceCountdown,
   } = useAppStore();
 
   const isConnected = status === "connected";
@@ -274,18 +277,25 @@ const handlePlayForFree = async (): Promise<void> => {
 
     // If a previous session is still active, end it first
     if (gameAlreadyActive && canEndGame) {
+      console.log('🛑 Ending previous game session...');
       try {
         await endGame();
-      } catch {
-        // ignore; proceed to refresh and start
+        console.log('✅ End game transaction submitted');
+      } catch (err) {
+        console.error('⚠️ Failed to end game:', err);
       }
 
-      // HARD REFRESH OF FRONTEND STATE
+      // HARD REFRESH OF FRONTEND STATE - wait longer for blockchain to update
+      console.log('🔄 Polling for session to end...');
       try {
-        await pollRefetchUntilInactive(refetch, 12, 350);
-      } catch {
-        // even if polling fails, still move on
+        await pollRefetchUntilInactive(refetch, 20, 500); // Increased to 20 tries, 500ms each = 10 seconds
+        console.log('✅ Session confirmed ended');
+      } catch (err) {
+        console.error('⚠️ Session polling timeout, continuing anyway');
       }
+
+      // Extra wait to ensure blockchain state is fully updated
+      await new Promise((r) => setTimeout(r, 1000));
     }
 
     // Start a fresh session if allowed
@@ -301,11 +311,19 @@ const handlePlayForFree = async (): Promise<void> => {
       }
     }
 
+    // Reset and initialize a fresh race (clear old session completely)
+    console.log('🔄 Resetting race state for new session');
+    resetRace();
+    initializeRace();
+
     // Start tutorial sequence: black screen -> video -> game
     setShowBlackScreen(true);
   } catch (error) {
     console.error('Error in play flow:', error);
     // Still try to start the game even if something failed
+    // Also reset race state even on error
+    resetRace();
+    initializeRace();
     setShowBlackScreen(true);
   }
 };

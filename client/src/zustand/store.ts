@@ -741,7 +741,7 @@ const useAppStore = create<AppStore>()(
 
       resetRace: () => {
         console.log('🔄 Resetting race - clearing all data');
-        set({
+        set((state) => ({
           countdownValue: 3,
           raceStarted: false,
           raceFinished: false,
@@ -749,7 +749,14 @@ const useAppStore = create<AppStore>()(
           position: { x: 283, y: 10, z: 458 },
           rotation: 0,
           velocity: { x: 0, y: 0, z: 0 },
-        });
+          // Force clear blockchain game session state
+          player: state.player ? {
+            ...state.player,
+            game_active: false
+          } : null,
+          gamePhase: GamePhase.INITIALIZED,
+          canTakeActions: false,
+        }));
       },
 
       // Utility getters
