@@ -45,15 +45,15 @@ export const CarController = () => {
   const raceInitializedRef = useRef(false);
   const collisionDistance = 5;
 
-  // Initialize race and start countdown
+  // Initialize race but don't start countdown
   useEffect(() => {
     if (!raceInitializedRef.current) {
       raceInitializedRef.current = true;
       initializeRace();
-      // Start countdown after a short delay
-      setTimeout(() => {
-        startRaceCountdown();
-      }, 500);
+      // Don't start countdown automatically - let user test
+      // setTimeout(() => {
+      //   startRaceCountdown();
+      // }, 500);
     }
   }, [initializeRace, startRaceCountdown]);
 
