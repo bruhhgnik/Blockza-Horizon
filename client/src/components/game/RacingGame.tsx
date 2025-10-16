@@ -23,6 +23,7 @@ export const CarController = () => {
   const { camera, scene } = useThree();
   const {
     position,
+    rotation,
     updatePosition,
     updateRotation,
     raceStarted,
@@ -36,7 +37,7 @@ export const CarController = () => {
   const velocityRef = useRef(new Vector3(0, 0, 0));
   const angularVelocityRef = useRef(0);
   const positionRef = useRef(new Vector3(position.x, position.y, position.z));
-  const rotationRef = useRef(0);
+  const rotationRef = useRef(rotation);
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const raycaster = useRef(new THREE.Raycaster());
   const collisionRaycaster = useRef(new THREE.Raycaster());
@@ -63,16 +64,16 @@ export const CarController = () => {
       velocityRef.current.set(0, 0, 0);
       angularVelocityRef.current = 0;
       positionRef.current.set(position.x, position.y, position.z);
-      rotationRef.current = 0;
+      rotationRef.current = rotation;
       cameraPosRef.current.set(0, 0, 0); // Reset camera
 
       // Reset car visual position
       if (carRef.current) {
         carRef.current.position.set(position.x, position.y, position.z);
-        carRef.current.rotation.y = 0;
+        carRef.current.rotation.y = rotation;
       }
     }
-  }, [countdownValue, position]);
+  }, [countdownValue, position, rotation]);
 
   // Keyboard event handlers
   useEffect(() => {
@@ -234,7 +235,7 @@ export const CarController = () => {
   });
 
   return (
-    <group ref={carRef} position={[position.x, position.y, position.z]}>
+    <group ref={carRef} position={[position.x, position.y, position.z]} rotation={[0, rotation, 0]}>
       <Car2Model scale={0.085} />
       {/* Add a simple light to the car */}
       <pointLight position={[0, 4, 0]} intensity={1} distance={35} />

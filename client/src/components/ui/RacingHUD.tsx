@@ -74,6 +74,14 @@ export const RacingHUD: React.FC = () => {
     return 'TH';
   };
 
+  // Convert rotation to compass direction
+  const getCompassDirection = (radians: number) => {
+    const degrees = ((radians * 180 / Math.PI) % 360 + 360) % 360;
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const index = Math.round(degrees / 45) % 8;
+    return directions[index];
+  };
+
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 100 }}>
       {/* Top bar - Wallet and Time */}
@@ -151,8 +159,69 @@ export const RacingHUD: React.FC = () => {
           <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#00bfff', fontFamily: 'monospace' }}>
             Z: {position.z.toFixed(1)}
           </div>
-          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffaa00', fontFamily: 'monospace', marginTop: '5px', borderTop: '1px solid rgba(255, 170, 0, 0.3)', paddingTop: '5px' }}>
-            Angle: {((rotation * 180 / Math.PI) % 360).toFixed(1)}°
+          {/* Compass */}
+          <div style={{ marginTop: '10px', borderTop: '1px solid rgba(255, 170, 0, 0.3)', paddingTop: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '5px' }}>
+              Direction
+            </div>
+            {/* Compass Circle */}
+            <div style={{ position: 'relative', width: '60px', height: '60px' }}>
+              {/* Compass background */}
+              <div style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(0, 0, 0, 0.8) 0%, rgba(50, 50, 50, 0.8) 100%)',
+                border: '2px solid rgba(255, 170, 0, 0.5)',
+              }} />
+              {/* Cardinal directions */}
+              <div style={{ position: 'absolute', top: '2px', left: '50%', transform: 'translateX(-50%)', fontSize: '10px', fontWeight: 'bold', color: '#ff4444' }}>N</div>
+              <div style={{ position: 'absolute', bottom: '2px', left: '50%', transform: 'translateX(-50%)', fontSize: '10px', fontWeight: 'bold', color: '#888' }}>S</div>
+              <div style={{ position: 'absolute', right: '2px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: 'bold', color: '#888' }}>E</div>
+              <div style={{ position: 'absolute', left: '2px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: 'bold', color: '#888' }}>W</div>
+              {/* Compass needle */}
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: '3px',
+                height: '20px',
+                background: 'linear-gradient(to bottom, #ff4444 0%, #ffaa00 100%)',
+                transformOrigin: 'center bottom',
+                transform: `translate(-50%, -100%) rotate(${rotation * 180 / Math.PI}deg)`,
+                boxShadow: '0 0 5px rgba(255, 68, 68, 0.8)',
+              }}>
+                {/* Needle point */}
+                <div style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '4px solid transparent',
+                  borderRight: '4px solid transparent',
+                  borderBottom: '6px solid #ff4444',
+                }} />
+              </div>
+              {/* Center dot */}
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: '#ffaa00',
+                transform: 'translate(-50%, -50%)',
+                boxShadow: '0 0 4px rgba(255, 170, 0, 0.8)',
+              }} />
+            </div>
+            {/* Direction label */}
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffaa00', fontFamily: 'monospace', marginTop: '5px' }}>
+              {getCompassDirection(rotation)}
+            </div>
           </div>
         </div>
       </div>

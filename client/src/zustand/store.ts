@@ -312,7 +312,7 @@ const initialState: AppState = {
   showGun: false,
   showCrosshair: true,
   showMapTracker: true,
-  position: { x: 1191.2, y: 5, z: 1494.8 }, // Starting position on track
+  position: { x: 1194.6, y: 5, z: 1495.4 }, // Starting position on track
   rotation: Math.PI / 2, // Exactly 90 degrees
   moving: false,
   velocity: { x: 0, y: 0, z: 0 },
