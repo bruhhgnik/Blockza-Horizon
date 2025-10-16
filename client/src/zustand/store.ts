@@ -724,10 +724,10 @@ const useAppStore = create<AppStore>()(
           raceFinished: false,
           carPositions: [
             { id: 'player', name: 'You', position: { x: 1191.2, y: 1.3, z: 1494.8 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-1', name: 'Max Thunder', position: { x: 1188.6, y: 1.3, z: 1502.4 }, rotation: -Math.PI / 2, finishTime: null, lapProgress: 0 },
+            { id: 'ai-1', name: 'Max Thunder', position: { x: 1188.6, y: 1.3, z: 1498.4 }, rotation: -Math.PI / 2, finishTime: null, lapProgress: 0 },
             { id: 'ai-2', name: 'Luna Speed', position: { x: 1178.9, y: 1.3, z: 1502.4 }, rotation: -Math.PI / 2, finishTime: null, lapProgress: 0 },
             { id: 'ai-3', name: 'Turbo Smith', position: { x: 1168.7, y: 1.3, z: 1502.4 }, rotation: -Math.PI / 2, finishTime: null, lapProgress: 0 },
-            { id: 'ai-4', name: 'Blaze Cruz', position: { x: 1164.4, y: 1.3, z: 1495.3 }, rotation: -Math.PI / 2, finishTime: null, lapProgress: 0 },
+            { id: 'ai-4', name: 'Blaze Cruz', position: { x: 1164.4, y: 1.3, z: 1495.3 }, rotation: Math.PI , finishTime: null, lapProgress: 0 },
             { id: 'ai-5', name: 'Nitro Nova', position: { x: 1172.2, y: 1.3, z: 1495.3 }, rotation: -Math.PI / 2, finishTime: null, lapProgress: 0 },
             { id: 'ai-6', name: 'Storm Racer', position: { x: 1183.9, y: 1.3, z: 1495.3 }, rotation: -Math.PI / 2, finishTime: null, lapProgress: 0 },
           ],
