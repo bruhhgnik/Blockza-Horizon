@@ -3,7 +3,7 @@ import useAppStore from '../../zustand/store';
 import { useStarknetConnect } from '../../dojo/hooks/useStarknetConnect';
 
 export const RacingHUD: React.FC = () => {
-  const { carPositions, raceStarted, velocity } = useAppStore();
+  const { carPositions, raceStarted, velocity, position, rotation } = useAppStore();
   const { address } = useStarknetConnect();
   const [elapsedTime, setElapsedTime] = useState(0);
   const [speed, setSpeed] = useState(0);
@@ -124,6 +124,35 @@ export const RacingHUD: React.FC = () => {
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#00ff00', fontFamily: 'monospace' }}>
             {formatTime(elapsedTime)}
+          </div>
+        </div>
+
+        {/* Coordinates */}
+        <div
+          style={{
+            background: 'rgba(0, 0, 0, 0.7)',
+            border: '2px solid rgba(0, 191, 255, 0.5)',
+            borderRadius: '8px',
+            padding: '10px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <div style={{ fontSize: '12px', color: '#888', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '5px' }}>
+            Coordinates
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#00bfff', fontFamily: 'monospace' }}>
+            X: {position.x.toFixed(1)}
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#00bfff', fontFamily: 'monospace' }}>
+            Y: {position.y.toFixed(1)}
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#00bfff', fontFamily: 'monospace' }}>
+            Z: {position.z.toFixed(1)}
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffaa00', fontFamily: 'monospace', marginTop: '5px', borderTop: '1px solid rgba(255, 170, 0, 0.3)', paddingTop: '5px' }}>
+            Angle: {((rotation * 180 / Math.PI) % 360).toFixed(1)}°
           </div>
         </div>
       </div>

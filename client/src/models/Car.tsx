@@ -54,7 +54,7 @@ export function Model(props: JSX.IntrinsicElements['group']) {
       <mesh
         geometry={nodes.Object_2.geometry}
         material={carMaterial}
-        rotation={[-Math.PI / 2, 0, 0]}
+        rotation={[0, Math.PI /2, 0]}
         castShadow
         receiveShadow
       />

@@ -21,7 +21,7 @@ export const CAR_PHYSICS = {
   forwardFriction: 0.97, // Rolling resistance
 
   // Physical properties
-  carHeightOffset: 3,
+  carHeightOffset: 2.26, // Adjusted for car scale
 
   // Speed-dependent steering (less steering at high speeds)
   minSteerFactor: 0.6, // At max speed

@@ -312,8 +312,8 @@ const initialState: AppState = {
   showGun: false,
   showCrosshair: true,
   showMapTracker: true,
-  position: { x: 283, y: 10, z: 458 }, // Starting position for race
-  rotation: 0,
+  position: { x: 1191.2, y: 5, z: 1494.8 }, // Starting position on track
+  rotation: Math.PI / 2, // Exactly 90 degrees
   moving: false,
   velocity: { x: 0, y: 0, z: 0 },
   activeWeapon: "pistol",
@@ -718,23 +718,12 @@ const useAppStore = create<AppStore>()(
         }),
 
       initializeRace: () => {
-        // Use consistent racing names (not shuffled, to keep them stable)
-        const racingNames = [
-          'Max Thunder', 'Luna Speed', 'Turbo Smith', 'Blaze Cruz', 'Nitro Nova', 'Storm Racer'
-        ];
-
         set({
           countdownValue: 3,
           raceStarted: false,
           raceFinished: false,
           carPositions: [
-            { id: 'player', name: 'You', position: { x: 283, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-1', name: racingNames[0], position: { x: 290, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-2', name: racingNames[1], position: { x: 276, y: 10, z: 458 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-3', name: racingNames[2], position: { x: 290, y: 10, z: 450 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-4', name: racingNames[3], position: { x: 276, y: 10, z: 450 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-5', name: racingNames[4], position: { x: 290, y: 10, z: 442 }, rotation: 0, finishTime: null, lapProgress: 0 },
-            { id: 'ai-6', name: racingNames[5], position: { x: 276, y: 10, z: 442 }, rotation: 0, finishTime: null, lapProgress: 0 },
+            { id: 'player', name: 'You', position: { x: 1191.2, y: 5, z: 1494.8 }, rotation: Math.PI / 2, finishTime: null, lapProgress: 0 },
           ],
         });
       },
@@ -746,8 +735,8 @@ const useAppStore = create<AppStore>()(
           raceStarted: false,
           raceFinished: false,
           carPositions: [], // This will be repopulated by initializeRace
-          position: { x: 283, y: 10, z: 458 },
-          rotation: 0,
+          position: { x: 1191.2, y: 5, z: 1494.8 },
+          rotation: Math.PI / 2,
           velocity: { x: 0, y: 0, z: 0 },
           // Note: We don't modify player.game_active here - that's blockchain state
           // The movement hook guards will prevent racing movements from being sent

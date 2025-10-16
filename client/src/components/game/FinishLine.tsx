@@ -9,12 +9,12 @@ export const FinishLine = () => {
   const movedAwayCarsRef = useRef<Set<string>>(new Set()); // Cars that have moved away from start
   const startTimeRef = useRef<number | null>(null);
 
-  // Finish line position and dimensions
-  const finishLineZ = 460; // Finish line Z position
-  const finishLineMinX = 282; // Left edge of finish line
-  const finishLineMaxX = 300; // Right edge of finish line
-  const finishLineWidth = finishLineMaxX - finishLineMinX; // 18 units wide
-  const finishLineCenterX = (finishLineMinX + finishLineMaxX) / 2; // Center at 291
+  // Finish line position and dimensions - aligned with actual track
+  const finishLineZ = 1493.0; // Finish line Z position - just ahead of starting line
+  const finishLineMinX = 1179.1; // Left edge of finish line
+  const finishLineMaxX = 1209.1; // Right edge of finish line
+  const finishLineWidth = finishLineMaxX - finishLineMinX; // 30 units wide
+  const finishLineCenterX = (finishLineMinX + finishLineMaxX) / 2; // Center at 1194.1
   const finishLineThickness = 3; // Thickness in Z direction
 
   useEffect(() => {

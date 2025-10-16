@@ -85,7 +85,7 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
     // Only move if race has started
     if (raceStarted) {
       // AI Logic: Simple strategy - always accelerate, steer to maintain racing line
-      const centerLineX = 283; // Track center X position
+      const centerLineX = 1194.1; // Track center X position - aligned with actual track
       const desiredX = centerLineX + targetLateralOffset.current;
       const currentOffsetFromDesired = positionRef.current.x - desiredX;
 
@@ -149,7 +149,7 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
       carRef.current.rotation.y = rotationRef.current;
 
       // Calculate lap progress (simple Z-based progress for now)
-      const startZ = 458;
+      const startZ = 1495.0;
       const lapProgress = Math.max(0, (startZ - positionRef.current.z) / 1000); // Rough estimate
 
       // Update race state
@@ -164,22 +164,22 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
 
   return (
     <group ref={carRef} position={[startPosition.x, startPosition.y, startPosition.z]}>
-      <CarModel scale={1.5} />
+      <CarModel scale={0.074} />
       {/* Driver name text above car - always faces camera */}
       <Text
-        position={[0, 12, 0]}
-        fontSize={0.6}
+        position={[0, 2.22, 0]}
+        fontSize={0.35}
         color={color}
         anchorX="center"
         anchorY="middle"
-        outlineWidth={0.1}
+        outlineWidth={0.022}
         outlineColor="#000000"
         fillOpacity={1}
         outlineOpacity={1}
       >
         {driverName}
       </Text>
-      <pointLight position={[0, 6, 0]} intensity={1.0} distance={50} color={color} />
+      <pointLight position={[0, 1.1, 0]} intensity={1.0} distance={35} color={color} />
     </group>
   );
 };

@@ -208,8 +208,8 @@ export const CarController = () => {
     const lapProgress = 0; // Placeholder
     updateCarPosition('player', newPosition, rotationRef.current, lapProgress);
 
-    // Camera follows car smoothly
-    const cameraOffset = new Vector3(0, 15, 20);
+    // Camera follows car smoothly - third-person POV behind car (closer and lower)
+    const cameraOffset = new Vector3(0, 5, 10);
     const rotatedOffset = cameraOffset.applyAxisAngle(new Vector3(0, 1, 0), rotationRef.current);
 
     // Target camera position
@@ -235,23 +235,23 @@ export const CarController = () => {
 
   return (
     <group ref={carRef} position={[position.x, position.y, position.z]}>
-      <Car2Model scale={0.17} />
+      <Car2Model scale={0.085} />
       {/* Add a simple light to the car */}
-      <pointLight position={[0, 5, 0]} intensity={1} distance={50} />
+      <pointLight position={[0, 4, 0]} intensity={1} distance={35} />
     </group>
   );
 };
 
 // Main racing game scene
 export const RacingGame = () => {
-  // Stable AI car configurations (names don't change)
+  // Stable AI car configurations (names don't change) - positioned at track location
   const aiCarPositions = useMemo(() => [
-    { id: 'ai-1', x: 290, y: 10, z: 458, color: '#ff0000', model: Car3Model, name: 'Max Thunder' },   // Row 1, Right - Red - Car3
-    { id: 'ai-2', x: 276, y: 10, z: 458, color: '#00ff00', model: Car4Model, name: 'Luna Speed' },    // Row 1, Left - Green - Car4
-    { id: 'ai-3', x: 290, y: 10, z: 450, color: '#0000ff', model: Car5Model, name: 'Turbo Smith' },   // Row 2, Right - Blue - Car5
-    { id: 'ai-4', x: 276, y: 10, z: 450, color: '#ffff00', model: Car6Model, name: 'Blaze Cruz' },    // Row 2, Left - Yellow - Car6
-    { id: 'ai-5', x: 290, y: 10, z: 442, color: '#ff00ff', model: Car3Model, name: 'Nitro Nova' },    // Row 3, Right - Magenta - Car3
-    { id: 'ai-6', x: 276, y: 10, z: 442, color: '#00ffff', model: Car4Model, name: 'Storm Racer' },   // Row 3, Left - Cyan - Car4
+    { id: 'ai-1', x: 1194.1, y: 5, z: 1500.0, color: '#ff0000', model: Car3Model, name: 'Max Thunder' },   // Behind player - Red - Car3
+    { id: 'ai-2', x: 1194.1, y: 5, z: 1490.0, color: '#00ff00', model: Car4Model, name: 'Luna Speed' },    // Ahead of player - Green - Car4
+    { id: 'ai-3', x: 1186.1, y: 5, z: 1500.0, color: '#0000ff', model: Car5Model, name: 'Turbo Smith' },   // Left, behind - Blue - Car5
+    { id: 'ai-4', x: 1186.1, y: 5, z: 1490.0, color: '#ffff00', model: Car6Model, name: 'Blaze Cruz' },    // Left, ahead - Yellow - Car6
+    { id: 'ai-5', x: 1202.1, y: 5, z: 1500.0, color: '#ff00ff', model: Car3Model, name: 'Nitro Nova' },    // Right, behind - Magenta - Car3
+    { id: 'ai-6', x: 1202.1, y: 5, z: 1490.0, color: '#00ffff', model: Car4Model, name: 'Storm Racer' },   // Right, ahead - Cyan - Car4
   ], []); // Empty dependency array means this only runs once
 
   return (
@@ -265,11 +265,8 @@ export const RacingGame = () => {
       {/* Floor grid */}
       <FloorGrid />
 
-      {/* Racing map - positioned and scaled to match car starting position */}
-      <MapModel position={[400, 0, 400]} scale={100} />
-
-      {/* Finish line */}
-      <FinishLine />
+      {/* Racing map - positioned directly under the cars */}
+      <MapModel position={[400, -2, 400]} scale={1} />
 
       {/* Player car with controls */}
       <CarController />
