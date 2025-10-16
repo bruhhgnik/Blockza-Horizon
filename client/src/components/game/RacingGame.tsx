@@ -26,6 +26,7 @@ export const CarController = () => {
     rotation,
     updatePosition,
     updateRotation,
+    setVelocity,
     raceStarted,
     countdownValue,
     initializeRace,
@@ -204,6 +205,7 @@ export const CarController = () => {
     // Update store and car position in race state
     updatePosition(newPosition);
     updateRotation(rotationRef.current);
+    setVelocity({ x: velocityRef.current.x, y: velocityRef.current.y, z: velocityRef.current.z });
 
     // Update car position in race leaderboard
     const lapProgress = 0; // Placeholder

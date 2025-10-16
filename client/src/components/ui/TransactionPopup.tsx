@@ -19,54 +19,45 @@ export const TransactionPopup: React.FC<TransactionPopupProps> = ({
     <div
       style={{
         position: "fixed",
-        top: 20,                 // top-right as per new UI
+        top: 20,
         right: 20,
         zIndex: 3000,
-        backgroundColor: "rgba(0, 0, 0, 0.9)",
-        border: "2px solid #444",
-        borderRadius: 8,
-        padding: 20,
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        border: "1px solid rgba(255, 255, 255, 0.2)",
+        borderRadius: 6,
+        padding: "8px 12px",
         color: "white",
         fontFamily: "monospace",
-        minWidth: 300,
-        textAlign: "center",
+        fontSize: 12,
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
       }}
     >
       {isLoading && (
         <>
-          <div style={{ marginBottom: 10, color: "#E1CF48" }}>
-            🔄 Processing Movement Transaction.
-          </div>
-          <div style={{ fontSize: 12, color: "#ccc" }}>
-            Updating blockchain position
-          </div>
+          <div style={{ color: "#E1CF48" }}>🔄</div>
+          <div>Processing...</div>
         </>
       )}
 
       {error && (
         <>
-          <div style={{ marginBottom: 10, color: "#ff6666" }}>
-            ❌ Transaction Failed
-          </div>
-          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 15 }}>
-            {error}
-          </div>
-          <div style={{ fontSize: 12, color: "#ffaa00" }}>
-            Position reverted to last verified location
-          </div>
+          <div style={{ color: "#ff6666" }}>❌</div>
+          <div style={{ color: "#ccc" }}>Failed</div>
           <button
             onClick={onClose}
             style={{
-              marginTop: 15,
-              backgroundColor: "#444",
-              color: "white",
+              backgroundColor: "transparent",
+              color: "#888",
               border: "none",
-              padding: "8px 16px",
-              borderRadius: 4,
+              padding: "2px 6px",
+              fontSize: 10,
               cursor: "pointer",
+              marginLeft: "4px",
             }}
           >
-            Close
+            ✕
           </button>
         </>
       )}
