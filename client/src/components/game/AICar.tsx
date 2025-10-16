@@ -16,13 +16,16 @@ interface AICarProps {
 
 export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, driverName }: AICarProps) => {
   const { scene } = useThree();
-  const { raceStarted, countdownValue, updateCarPosition } = useAppStore();
+  const { raceStarted, countdownValue, updateCarPosition, carPositions } = useAppStore();
+
+  // Get initial rotation from store
+  const initialRotation = carPositions.find(car => car.id === carId)?.rotation ?? Math.PI / 2;
 
   const carRef = useRef<THREE.Group>(null);
   const velocityRef = useRef(new Vector3(0, 0, 0));
   const angularVelocityRef = useRef(0);
   const positionRef = useRef(new Vector3(startPosition.x, startPosition.y, startPosition.z));
-  const rotationRef = useRef(0);
+  const rotationRef = useRef(initialRotation);
   const raycaster = useRef(new THREE.Raycaster());
 
   // AI parameters for variation
@@ -37,12 +40,12 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
     positionRef.current.set(startPosition.x, startPosition.y, startPosition.z);
     velocityRef.current.set(0, 0, 0);
     angularVelocityRef.current = 0;
-    rotationRef.current = 0; // Face forward (negative Z direction)
+    rotationRef.current = initialRotation;
     hasStartedRef.current = false;
 
-    // Set initial car rotation to face forward
+    // Set initial car rotation
     if (carRef.current) {
-      carRef.current.rotation.y = 0;
+      carRef.current.rotation.y = initialRotation;
     }
 
     return () => {
@@ -58,20 +61,20 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
       velocityRef.current.set(0, 0, 0);
       angularVelocityRef.current = 0;
       positionRef.current.set(startPosition.x, startPosition.y, startPosition.z);
-      rotationRef.current = 0;
+      rotationRef.current = initialRotation;
       hasStartedRef.current = false;
 
       // Reset car visual position
       if (carRef.current) {
         carRef.current.position.set(startPosition.x, startPosition.y, startPosition.z);
-        carRef.current.rotation.y = 0;
+        carRef.current.rotation.y = initialRotation;
       }
 
       // Randomize AI parameters for variety in each race
       targetLateralOffset.current = (Math.random() - 0.5) * 12;
       aggressiveness.current = 0.93 + Math.random() * 0.07;
     }
-  }, [countdownValue, startPosition, driverName]);
+  }, [countdownValue, startPosition, driverName, initialRotation]);
 
   useFrame(() => {
     if (!carRef.current) return;
@@ -163,7 +166,7 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
   });
 
   return (
-    <group ref={carRef} position={[startPosition.x, startPosition.y, startPosition.z]}>
+    <group ref={carRef} position={[startPosition.x, startPosition.y, startPosition.z]} rotation={[0, initialRotation, 0]}>
       <CarModel scale={0.074} />
       {/* Driver name text above car - always faces camera */}
       <Text
