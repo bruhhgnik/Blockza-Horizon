@@ -250,9 +250,30 @@ export const CarController = () => {
 
   return (
     <group ref={carRef} position={[position.x, position.y, position.z]} rotation={[0, rotation, 0]}>
-      <Car2Model scale={0.085} />
-      {/* Add a simple light to the car */}
-      <pointLight position={[0, 4, 0]} intensity={1} distance={35} />
+      <Car2Model scale={0.085} castShadow receiveShadow />
+
+      {/* Front headlights - positioned at front of car */}
+      <spotLight
+        position={[0.5, 0.5, -1.5]}
+        angle={0.6}
+        penumbra={0.5}
+        intensity={2}
+        distance={30}
+        color="#ffffff"
+        castShadow
+      />
+      <spotLight
+        position={[-0.5, 0.5, -1.5]}
+        angle={0.6}
+        penumbra={0.5}
+        intensity={2}
+        distance={30}
+        color="#ffffff"
+        castShadow
+      />
+
+      {/* Ambient light above car */}
+      <pointLight position={[0, 4, 0]} intensity={0.5} distance={35} />
     </group>
   );
 };
@@ -273,7 +294,18 @@ export const RacingGame = () => {
     <>
       {/* Enhanced lighting to show car colors */}
       <ambientLight intensity={1.2} />
-      <directionalLight position={[100, 100, 50]} intensity={1.5} castShadow />
+      <directionalLight
+        position={[100, 100, 50]}
+        intensity={1.5}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-far={500}
+        shadow-camera-left={-100}
+        shadow-camera-right={100}
+        shadow-camera-top={100}
+        shadow-camera-bottom={-100}
+      />
       <directionalLight position={[-100, 100, -50]} intensity={0.8} />
       <hemisphereLight args={['#ffffff', '#666666', 0.8]} />
 
@@ -281,7 +313,7 @@ export const RacingGame = () => {
       <FloorGrid />
 
       {/* Racing map - positioned directly under the cars */}
-      <MapModel position={[400, -2, 400]} scale={1} />
+      <MapModel position={[400, -2, 400]} scale={1} receiveShadow />
 
       {/* Player car with controls */}
       <CarController />
