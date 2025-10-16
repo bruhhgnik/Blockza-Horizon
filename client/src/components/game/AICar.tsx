@@ -129,23 +129,36 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
       positionRef.current = newState.position;
       rotationRef.current = newState.rotation;
 
-      // Raycast downward for terrain height
+      // Raycast downward for terrain height (road surface only, not barriers)
       raycaster.current.set(
         new Vector3(positionRef.current.x, 100, positionRef.current.z),
         new Vector3(0, -1, 0)
       );
 
       const intersects = raycaster.current.intersectObjects(scene.children, true);
+
+      // Find the lowest intersection point below the car (the actual road surface)
+      // This prevents cars from riding on top of barriers/obstacles
       let terrainHeight = 0;
+      let foundRoad = false;
 
       for (const intersect of intersects) {
-        if (carRef.current && !carRef.current.getObjectById(intersect.object.id)) {
+        // Skip the car itself
+        if (carRef.current && carRef.current.getObjectById(intersect.object.id)) continue;
+
+        // Skip floor grid
+        if (intersect.object.name === 'floorGrid' || intersect.object.type === 'GridHelper') continue;
+
+        // Take the lowest Y position (road surface, not barriers above)
+        if (!foundRoad || intersect.point.y < terrainHeight) {
           terrainHeight = intersect.point.y;
-          break;
+          foundRoad = true;
         }
       }
 
-      positionRef.current.y = terrainHeight + CAR_PHYSICS.carHeightOffset;
+      // Update position with terrain following
+      const calculatedY = terrainHeight + CAR_PHYSICS.carHeightOffset;
+      positionRef.current.y = calculatedY;
 
       // Update car visual position and rotation
       carRef.current.position.copy(positionRef.current);
