@@ -247,12 +247,12 @@ export const CarController = () => {
 export const RacingGame = () => {
   // Stable AI car configurations (names don't change) - positioned at track location
   const aiCarPositions = useMemo(() => [
-    { id: 'ai-1', x: 1188.6, y: 5, z: 1502.4, color: '#ff0000', model: Car3Model, name: 'Max Thunder' },
-    { id: 'ai-2', x: 1178.9, y: 5, z: 1502.4, color: '#00ff00', model: Car4Model, name: 'Luna Speed' },
-    { id: 'ai-3', x: 1168.7, y: 5, z: 1502.4, color: '#0000ff', model: Car5Model, name: 'Turbo Smith' },
-    { id: 'ai-4', x: 1164.4, y: 5, z: 1495.3, color: '#ffff00', model: Car6Model, name: 'Blaze Cruz' },
-    { id: 'ai-5', x: 1172.2, y: 5, z: 1495.3, color: '#ff00ff', model: Car3Model, name: 'Nitro Nova' },
-    { id: 'ai-6', x: 1183.9, y: 5, z: 1495.3, color: '#00ffff', model: Car4Model, name: 'Storm Racer' },
+    { id: 'ai-1', x: 1188.6, y: 1.3, z: 1502.4, color: '#ff0000', model: Car3Model, name: 'Max Thunder' },
+    { id: 'ai-2', x: 1178.9, y: 1.3, z: 1502.4, color: '#00ff00', model: Car4Model, name: 'Luna Speed' },
+    { id: 'ai-3', x: 1168.7, y: 1.3, z: 1502.4, color: '#0000ff', model: Car5Model, name: 'Turbo Smith' },
+    { id: 'ai-4', x: 1164.4, y: 1.3, z: 1495.3, color: '#ffff00', model: Car6Model, name: 'Blaze Cruz' },
+    { id: 'ai-5', x: 1172.2, y: 1.3, z: 1495.3, color: '#ff00ff', model: Car3Model, name: 'Nitro Nova' },
+    { id: 'ai-6', x: 1183.9, y: 1.3, z: 1495.3, color: '#00ffff', model: Car4Model, name: 'Storm Racer' },
   ], []); // Empty dependency array means this only runs once
 
   return (

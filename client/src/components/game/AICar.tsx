@@ -167,7 +167,7 @@ export const AICar = ({ carId, startPosition, color = '#ff0000', CarModel, drive
 
   return (
     <group ref={carRef} position={[startPosition.x, startPosition.y, startPosition.z]} rotation={[0, initialRotation, 0]}>
-      <CarModel scale={0.074} />
+      <CarModel scale={0.5} />
       {/* Driver name text above car - always faces camera */}
       <Text
         position={[0, 2.22, 0]}
